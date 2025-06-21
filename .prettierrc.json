@@ -1,0 +1,36 @@
+{
+  "semi": false,
+  "trailingComma": "all",
+  "printWidth": 120,
+  "singleQuote": true,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": ["*.json5"],
+      "options": {
+        "singleQuote": false,
+        "quoteProps": "preserve"
+      }
+    },
+    {
+      "files": ["*.yaml", "*.yml"],
+      "options": {
+        "singleQuote": false
+      }
+    },
+    {
+      "files": ["*.md"],
+      "options": {
+        "printWidth": 120
+      }
+    },
+    {
+      "files": ["*.html", "*.vue", "*.jsx", "*.tsx"],
+      "options": {
+        "printWidth": 100
+      }
+    }
+  ]
+}
