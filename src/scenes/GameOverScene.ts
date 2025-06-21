@@ -8,7 +8,7 @@ class GameOverScene extends Phaser.Scene {
     super({ key: SCENE_KEYS.GAME_OVER });
   }
 
-  init(data: { score: number }) {
+  init(data: { score?: number }) {
     this.score = data.score || 0;
   }
 
@@ -32,15 +32,19 @@ class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    const gradient = gameOverText.context.createLinearGradient(
-      0,
-      0,
-      0,
-      gameOverText.height
-    );
-    gradient.addColorStop(0, "#ffdd00");
-    gradient.addColorStop(1, "#fbb034");
-    gameOverText.setFill(gradient);
+    try {
+      const gradient = gameOverText.context.createLinearGradient(
+        0,
+        0,
+        0,
+        gameOverText.height
+      );
+      gradient.addColorStop(0, "#ffdd00");
+      gradient.addColorStop(1, "#fbb034");
+      gameOverText.setFill(gradient);
+    } catch (e) {
+      console.warn("Failed to create text gradient. Using solid color.", e);
+    }
 
     // --- Display the final score ---
     this.add
@@ -59,20 +63,31 @@ class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // --- 2. Player Sprite with Idle Animation ---
-    const player = this.add.sprite(
-      this.scale.width / 2,
-      this.scale.height / 2 + 50,
-      TEXTURE_KEYS.PLAYER
-    );
-    player.setScale(0.35);
-    player.play(ANIMATION_KEYS.PLAYER_IDLE);
+    try {
+      const player = this.add.sprite(
+        this.scale.width / 2,
+        this.scale.height / 2 + 50,
+        TEXTURE_KEYS.PLAYER
+      );
+      player.setScale(0.35);
+
+      // --- Defensively play animation only if it exists ---
+      if (this.anims.exists(ANIMATION_KEYS.PLAYER_IDLE)) {
+        player.play(ANIMATION_KEYS.PLAYER_IDLE);
+      } else {
+        console.warn(`Animation not found: ${ANIMATION_KEYS.PLAYER_IDLE}. Displaying static sprite.`);
+      }
+    } catch (error) {
+      console.error("Failed to create player sprite on game over screen:", error);
+    }
+
 
     // --- 3. Interactive "Restart" Text with Tween ---
     const restartText = this.add
       .text(
         this.scale.width / 2,
         this.scale.height - 80,
-        "Click or Press Enter to Restart", // Updated text
+        "Click or Press Enter to Restart",
         {
           fontFamily: "Staatliches",
           fontSize: "48px",
@@ -93,15 +108,20 @@ class GameOverScene extends Phaser.Scene {
 
     // --- 4. Restart Logic ---
     restartText.on("pointerdown", this.restartGame, this);
-
-    // --- NEW: Add keyboard listener for the Enter key ---
     this.input.keyboard?.on("keydown-ENTER", this.restartGame, this);
   }
 
-  // --- NEW: Reusable restart function ---
   private restartGame(): void {
-    // Prevent multiple restart triggers
+    // --- Prevent multiple restart triggers from firing simultaneously ---
     this.input.keyboard?.off("keydown-ENTER", this.restartGame, this);
+    this.input.off("pointerdown", this.restartGame, this);
+
+    // --- Robustly check if the target scene exists before trying to start it ---
+    if (!this.scene.manager.keys[SCENE_KEYS.MAIN]) {
+      console.error(`Scene key not found: ${SCENE_KEYS.MAIN}. Cannot restart game.`);
+      // Optionally, display an error to the user on the screen here
+      return;
+    }
 
     this.cameras.main.fadeOut(500, 0, 0, 0, (_: any, progress: number) => {
       if (progress === 1) {

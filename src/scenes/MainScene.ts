@@ -20,10 +20,18 @@ class MainScene extends Phaser.Scene {
   }
 
   create() {
-    this.player = this.physics.add.sprite(400, 300, TEXTURE_KEYS.PLAYER);
-    this.player.setCollideWorldBounds(true);
+    try {
+      this.player = this.physics.add.sprite(400, 300, TEXTURE_KEYS.PLAYER);
+      this.player.setCollideWorldBounds(true);
+      this.player.setScale(0.25).play(ANIMATION_KEYS.PLAYER_IDLE);
+    } catch (error) {
+        console.error("Fatal Error: Could not create player sprite. Check if assets loaded correctly.", error);
+        // Fallback: Stop the scene and maybe show an error.
+        this.add.text(this.scale.width / 2, this.scale.height / 2, "CRITICAL ERROR\nCould not start game.", { color: 'red', fontSize: '32px' }).setOrigin(0.5);
+        this.scene.pause();
+        return;
+    }
 
-    // --- NEW: Create two sets of cursor keys ---
     this.wasdCursors = this.input.keyboard?.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
       down: Phaser.Input.Keyboard.KeyCodes.S,
@@ -32,8 +40,6 @@ class MainScene extends Phaser.Scene {
     }) as Phaser.Types.Input.Keyboard.CursorKeys;
 
     this.arrowCursors = this.input.keyboard?.createCursorKeys();
-
-    this.player.setScale(0.25).play(ANIMATION_KEYS.PLAYER_IDLE);
 
     this.chasers = this.physics.add.group();
     this.physics.add.collider(this.chasers, this.chasers);
@@ -83,7 +89,6 @@ class MainScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(0);
 
-    // --- NEW: Check both WASD and Arrow Keys for movement ---
     if (this.wasdCursors.left.isDown || this.arrowCursors.left.isDown) {
       body.setVelocityX(-this.speed);
     } else if (this.wasdCursors.right.isDown || this.arrowCursors.right.isDown) {
@@ -124,7 +129,15 @@ class MainScene extends Phaser.Scene {
   gameOver() {
     this.chaserSpawnTimer?.remove(false);
     const finalScore = (this.time.now - this.startTime) / 1000;
-    this.scene.start(SCENE_KEYS.GAME_OVER, { score: finalScore });
+
+    // --- Defensively check if the GameOver scene exists before starting it ---
+    if (this.scene.manager.keys[SCENE_KEYS.GAME_OVER]) {
+      this.scene.start(SCENE_KEYS.GAME_OVER, { score: finalScore });
+    } else {
+        console.error(`Scene key not found: ${SCENE_KEYS.GAME_OVER}. Cannot show game over screen.`);
+        // As a fallback, just stop the current scene to prevent further updates.
+        this.scene.stop();
+    }
   }
 }
 
