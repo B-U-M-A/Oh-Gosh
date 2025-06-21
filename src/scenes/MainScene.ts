@@ -46,6 +46,10 @@ class MainScene extends Phaser.Scene {
 
     this.arrowCursors = this.input.keyboard?.createCursorKeys()
 
+    // --- Add keyboard listeners for pausing ---
+    this.input.keyboard?.on('keydown-P', this.togglePause, this)
+    this.input.keyboard?.on('keydown-ESC', this.togglePause, this)
+
     this.chasers = this.physics.add.group()
     this.physics.add.collider(this.chasers, this.chasers)
 
@@ -57,11 +61,36 @@ class MainScene extends Phaser.Scene {
     })
 
     this.startTime = this.time.now
+
+    // --- Clean up listeners on scene shutdown ---
+    this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off('keydown-P', this.togglePause, this)
+      this.input.keyboard?.off('keydown-ESC', this.togglePause, this)
+      if (this.chaserSpawnTimer) {
+        this.chaserSpawnTimer.remove()
+      }
+    })
+  }
+
+  private togglePause(): void {
+    if (!this.scene.isPaused()) {
+      this.scene.pause()
+
+      if (this.scene.manager.keys[SCENE_KEYS.PAUSE]) {
+        this.scene.launch(SCENE_KEYS.PAUSE)
+      } else {
+        console.error(`Pause scene key not found: ${SCENE_KEYS.PAUSE}. Cannot pause game.`)
+        this.scene.resume()
+      }
+    }
   }
 
   private spawnChaser(): void {
-    if (!this.scene.isActive(SCENE_KEYS.MAIN) || this.chasers.getLength() >= this.MAX_CHASERS) {
-      this.chaserSpawnTimer?.remove()
+    if (
+      this.scene.isPaused() ||
+      !this.scene.isActive(SCENE_KEYS.MAIN) ||
+      this.chasers.getLength() >= this.MAX_CHASERS
+    ) {
       return
     }
 

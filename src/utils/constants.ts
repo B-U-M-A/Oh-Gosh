@@ -10,4 +10,5 @@ export const SCENE_KEYS = {
   PRELOADER: 'PreloaderScene',
   MAIN: 'MainScene',
   GAME_OVER: 'GameOverScene',
+  PAUSE: 'PauseScene',
 }
