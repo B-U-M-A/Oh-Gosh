@@ -1,96 +1,95 @@
 import Phaser from "phaser";
 import GameOverScene from "./GameOverScene";
 
-// Use constants for keys to avoid typos and improve maintainability
+// --- CONSTANTS --- //
+
 const TEXTURE_KEYS = {
   PLAYER: "player_character",
-  CHASER: "chaser_mob",
 };
 
 const ANIMATION_KEYS = {
   PLAYER_IDLE: "player_idle",
 };
 
+const SCENE_KEYS = {
+  MAIN: "MainScene",
+  GAME_OVER: "GameOverScene",
+};
+
+// --- MAIN SCENE --- //
+
 class MainScene extends Phaser.Scene {
-  private player!: Phaser.Physics.Arcade.Sprite;
-  private chaser!: Phaser.GameObjects.Text;
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private player?: Phaser.Physics.Arcade.Sprite;
+  private chaser?: Phaser.GameObjects.Text;
+  private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
 
   private readonly speed = 200;
   private readonly chaserSpeed = 100;
 
   constructor() {
-    super({ key: "MainScene" });
+    super({ key: SCENE_KEYS.MAIN });
   }
 
-  preload() {
-    // Load assets here
-    for (let i = 0; i <= 3; i++) {
-      this.load.image(
-        `becerrita_idle_${i}`,
-        `src/assets/becerrita/idle/${String(i).padStart(2, "0")}_becerrita.png`
-      );
-    }
+  // Preloads game assets like spritesheets.
+  preload(): void {
+    this.load.spritesheet(
+      TEXTURE_KEYS.PLAYER,
+      "src/assets/becerrita/idle/becerrite.png",
+      {
+        frameWidth: 512, // Set the actual width of a single frame
+        frameHeight: 512, // Set the actual height of a single frame
+      }
+    );
   }
 
-  // preload(): void {
-  //   // Improvement 1: Use a single spritesheet for the player animation
-  //   this.load.spritesheet(
-  //     TEXTURE_KEYS.PLAYER,
-  //     "src/assets/becerrita/becerrita_idle_strip.png",
-  //     {
-  //       frameWidth: 256, // Set the actual width of a single frame
-  //       frameHeight: 256, // Set the actual height of a single frame
-  //     }
-  //   );
-
-  //   // this.load.image(TEXTURE_KEYS.CHASER, "src/assets/react.svg");
-  // }
-
+  // Creates game objects and initializes the scene.
   create() {
-    const becerrita = this.physics.add.sprite(400, 300, "becerrita_idle_0");
-    this.player = becerrita;
+    this.player = this.physics.add.sprite(400, 300, TEXTURE_KEYS.PLAYER);
     this.player.setCollideWorldBounds(true);
-    this.cursors = this.input.keyboard!.addKeys({
+
+    this.cursors = this.input.keyboard?.addKeys({
       up: "W",
       down: "S",
       left: "A",
       right: "D",
     }) as Phaser.Types.Input.Keyboard.CursorKeys;
 
-    // Create an array of frame objects from your individual image keys
-    const idleFrames = [];
-    for (let i = 0; i <= 3; i++) {
-      idleFrames.push({ key: `becerrita_idle_${i}` });
-    }
-
+    // Create the animation from the spritesheet
     this.anims.create({
-      key: "idle",
-      frames: idleFrames,
+      key: ANIMATION_KEYS.PLAYER_IDLE,
+      frames: this.anims.generateFrameNumbers(TEXTURE_KEYS.PLAYER, {
+        start: 0,
+        end: 3,
+      }),
       frameRate: 3,
       repeat: -1,
     });
 
-    becerrita.setScale(0.25);
-    becerrita.play("idle");
+    this.player.setScale(0.25);
+    this.player.play(ANIMATION_KEYS.PLAYER_IDLE);
 
     // Create chaser as text
-    const chaserText = this.add.text(100, 100, "C", {
-      fontFamily: "Arial",
+    this.chaser = this.add.text(100, 100, "C", {
+      fontFamily: "Comic Sans MS",
       fontSize: "32px",
-      color: "#FF00FF", // Fuchsia color
+      color: "#FF00FF",
     });
-    this.physics.add.existing(chaserText); // Add physics to the text object
-    this.chaser = chaserText;
-    this.chaser.setScale(2); // Same size as becerrita
+
+    this.physics.add.existing(this.chaser);
+    this.chaser.setScale(2);
+
     if (this.chaser.body instanceof Phaser.Physics.Arcade.Body) {
-      this.chaser.body.setCollideWorldBounds(true); // Keep chaser within bounds
+      this.chaser.body.setCollideWorldBounds(true);
     }
   }
 
   update() {
-    const body = this.player.body as Phaser.Physics.Arcade.Body;
-    body.setVelocity(0);
+    const body = this.player?.body;
+
+    if (body instanceof Phaser.Physics.Arcade.Body) {
+      body.setVelocity(0);
+    }
+
     // Game logic per frame
     if (this.player && this.cursors && this.player.body) {
       this.player.setVelocity(0);

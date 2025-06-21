@@ -1,12 +1,12 @@
 # Oh Gosh
 
-Oh Gosh is an arcade-style, single-player, browser-based video game where players control the character "Juan Becerra" with the objective of escaping from multiple pursuing entities referred to as "J"s. Featuring a distinct pixel art aesthetic, the game focuses on evasion and survival, offering an engaging and challenging experience directly within your web browser.
+Oh Gosh is an arcade-style, single-player, browser-based video game where players control the character "Juan Becerra" with the objective of escaping from multiple pursuing entities referred to as "C"s. Featuring a distinct pixel art aesthetic, the game focuses on evasion and survival, offering an engaging and challenging experience directly within your web browser.
 
 ## ✨ Features
 
 - **Intuitive Player Control:** Move Juan Becerra horizontally and vertically with keyboard (WASD/Arrow Keys) on desktop or an on-screen virtual joystick on mobile.
-- **Dynamic Enemy AI:** "J" enemies continuously pursue Juan Becerra, with their speed and numbers increasing over time for escalating challenge.
-- **Collision-based Game Over:** The game ends upon any collision between Juan Becerra and a "J", leading to a clear "Game Over" state.
+- **Dynamic Enemy AI:** "C" enemies continuously pursue Juan Becerra, with their speed and numbers increasing over time for escalating challenge.
+- **Collision-based Game Over:** The game ends upon any collision between Juan Becerra and a "C", leading to a clear "Game Over" state.
 - **Comprehensive Game State Management:** Handles transitions between start screen, active gameplay, and game over, with options to restart.
 - **Immersive Visuals & Audio:** Enjoy a consistent pixel art style with smooth animations, complemented by distinct sound effects for key events and looping background music.
 - **High Score Tracking:** Continuously tracks and displays survival time, records high scores, and persists them locally across browser sessions.
@@ -21,7 +21,7 @@ Oh Gosh is an arcade-style, single-player, browser-based video game where player
 
 ## 🎮 How to Play
 
-The objective is simple: **evade the "J"s for as long as possible!**
+The objective is simple: **evade the "C"s for as long as possible!**
 
 - **Movement (Desktop):** Use the `W`, `A`, `S`, `D` keys or the `Arrow Keys` to move Juan Becerra.
 - **Movement (Mobile):** Use the on-screen virtual joystick located in the bottom-left corner.
