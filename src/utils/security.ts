@@ -2,12 +2,12 @@
 
 export function sanitizeText(text: string): string {
   try {
-    const element = document.createElement("div");
-    element.innerText = text;
-    return element.innerHTML;
+    const element = document.createElement('div')
+    element.innerText = text
+    return element.innerHTML
   } catch (error) {
-    console.error("Failed to sanitize text, returning empty string.", error);
-    return "";
+    console.error('Failed to sanitize text, returning empty string.', error)
+    return ''
   }
 }
 
@@ -18,22 +18,20 @@ export function sanitizeText(text: string): string {
  */
 export function isValidAssetPath(path: string): boolean {
   // Rule 1: Disallow directory traversal sequences like '../' or '..\'
-  if (path.includes("..")) {
-    console.warn(
-      `Security Warning: Asset path contains traversal characters: ${path}`
-    );
-    return false;
+  if (path.includes('..')) {
+    console.warn(`Security Warning: Asset path contains traversal characters: ${path}`)
+    return false
   }
 
   // Rule 2: Disallow absolute paths or external URLs to keep assets project-local.
   // This can be adjusted if loading from a CDN is an intended feature.
-  const isAbsolute = path.startsWith('/') || /^[a-zA-Z]:\\/.test(path);
-  const hasProtocol = /^[a-zA-Z]+:\/\//.test(path);
+  const isAbsolute = path.startsWith('/') || /^[a-zA-Z]:\\/.test(path)
+  const hasProtocol = /^[a-zA-Z]+:\/\//.test(path)
 
   if (isAbsolute || hasProtocol) {
-    console.warn(`Security Warning: External or absolute asset paths are not allowed: ${path}`);
-    return false;
+    console.warn(`Security Warning: External or absolute asset paths are not allowed: ${path}`)
+    return false
   }
 
-  return true;
+  return true
 }
