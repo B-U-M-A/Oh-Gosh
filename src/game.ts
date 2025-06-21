@@ -44,6 +44,7 @@ class MainScene extends Phaser.Scene {
 
   // Creates game objects and initializes the scene.
   create() {
+    // --- Player Setup ---
     this.player = this.physics.add.sprite(400, 300, TEXTURE_KEYS.PLAYER);
     this.player.setCollideWorldBounds(true);
 
@@ -54,7 +55,7 @@ class MainScene extends Phaser.Scene {
       right: "D",
     }) as Phaser.Types.Input.Keyboard.CursorKeys;
 
-    // Create the animation from the spritesheet
+    // --- Animations ---
     this.anims.create({
       key: ANIMATION_KEYS.PLAYER_IDLE,
       frames: this.anims.generateFrameNumbers(TEXTURE_KEYS.PLAYER, {
