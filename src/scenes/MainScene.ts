@@ -5,10 +5,10 @@ import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS } from "../utils/constants";
 class MainScene extends Phaser.Scene {
   private player?: Phaser.Physics.Arcade.Sprite;
   private chasers!: Phaser.Physics.Arcade.Group;
-  private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
+  private wasdCursors?: Phaser.Types.Input.Keyboard.CursorKeys;
+  private arrowCursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private chaserSpawnTimer?: Phaser.Time.TimerEvent;
 
-  // --- NEW: Property to track start time ---
   private startTime: number = 0;
 
   private readonly speed = 200;
@@ -23,12 +23,15 @@ class MainScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(400, 300, TEXTURE_KEYS.PLAYER);
     this.player.setCollideWorldBounds(true);
 
-    this.cursors = this.input.keyboard?.addKeys({
+    // --- NEW: Create two sets of cursor keys ---
+    this.wasdCursors = this.input.keyboard?.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
       down: Phaser.Input.Keyboard.KeyCodes.S,
       left: Phaser.Input.Keyboard.KeyCodes.A,
       right: Phaser.Input.Keyboard.KeyCodes.D,
     }) as Phaser.Types.Input.Keyboard.CursorKeys;
+
+    this.arrowCursors = this.input.keyboard?.createCursorKeys();
 
     this.player.setScale(0.25).play(ANIMATION_KEYS.PLAYER_IDLE);
 
@@ -42,7 +45,6 @@ class MainScene extends Phaser.Scene {
       loop: true,
     });
 
-    // --- NEW: Record the start time ---
     this.startTime = this.time.now;
   }
 
@@ -76,16 +78,23 @@ class MainScene extends Phaser.Scene {
   }
 
   update() {
-    if (!this.player || !this.player.body || !this.cursors) return;
+    if (!this.player || !this.player.body || !this.wasdCursors || !this.arrowCursors) return;
 
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(0);
 
-    if (this.cursors.left.isDown) body.setVelocityX(-this.speed);
-    else if (this.cursors.right.isDown) body.setVelocityX(this.speed);
+    // --- NEW: Check both WASD and Arrow Keys for movement ---
+    if (this.wasdCursors.left.isDown || this.arrowCursors.left.isDown) {
+      body.setVelocityX(-this.speed);
+    } else if (this.wasdCursors.right.isDown || this.arrowCursors.right.isDown) {
+      body.setVelocityX(this.speed);
+    }
 
-    if (this.cursors.up.isDown) body.setVelocityY(-this.speed);
-    else if (this.cursors.down.isDown) body.setVelocityY(this.speed);
+    if (this.wasdCursors.up.isDown || this.arrowCursors.up.isDown) {
+      body.setVelocityY(-this.speed);
+    } else if (this.wasdCursors.down.isDown || this.arrowCursors.down.isDown) {
+      body.setVelocityY(this.speed);
+    }
 
     if (body.velocity.x !== 0 && body.velocity.y !== 0) {
       body.velocity.normalize().scale(this.speed);
@@ -114,11 +123,7 @@ class MainScene extends Phaser.Scene {
 
   gameOver() {
     this.chaserSpawnTimer?.remove(false);
-
-    // --- NEW: Calculate the final score ---
     const finalScore = (this.time.now - this.startTime) / 1000;
-
-    // --- NEW: Pass the score to the GameOverScene ---
     this.scene.start(SCENE_KEYS.GAME_OVER, { score: finalScore });
   }
 }

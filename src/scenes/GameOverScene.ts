@@ -8,9 +8,7 @@ class GameOverScene extends Phaser.Scene {
     super({ key: SCENE_KEYS.GAME_OVER });
   }
 
-  // --- NEW: Init method to receive data from the previous scene ---
   init(data: { score: number }) {
-    // Set a default score of 0 if nothing is passed
     this.score = data.score || 0;
   }
 
@@ -44,11 +42,11 @@ class GameOverScene extends Phaser.Scene {
     gradient.addColorStop(1, "#fbb034");
     gameOverText.setFill(gradient);
 
-    // --- NEW: Display the final score ---
+    // --- Display the final score ---
     this.add
       .text(
         this.scale.width / 2,
-        250, // Positioned below "GAME OVER"
+        250,
         `Your Score: ${this.score.toFixed(2)}`,
         {
           fontFamily: "Staatliches",
@@ -63,7 +61,7 @@ class GameOverScene extends Phaser.Scene {
     // --- 2. Player Sprite with Idle Animation ---
     const player = this.add.sprite(
       this.scale.width / 2,
-      this.scale.height / 2 + 50, // Moved down to make space for the score
+      this.scale.height / 2 + 50,
       TEXTURE_KEYS.PLAYER
     );
     player.setScale(0.35);
@@ -73,8 +71,8 @@ class GameOverScene extends Phaser.Scene {
     const restartText = this.add
       .text(
         this.scale.width / 2,
-        this.scale.height - 80, // Moved up slightly
-        "Click to Restart",
+        this.scale.height - 80,
+        "Click or Press Enter to Restart", // Updated text
         {
           fontFamily: "Staatliches",
           fontSize: "48px",
@@ -94,13 +92,21 @@ class GameOverScene extends Phaser.Scene {
     });
 
     // --- 4. Restart Logic ---
-    restartText.on("pointerdown", () => {
-      this.cameras.main.fadeOut(500, 0, 0, 0, (_: any, progress: any) => {
-        if (progress === 1) {
-          // Restart the main scene without passing any data
-          this.scene.start(SCENE_KEYS.MAIN);
-        }
-      });
+    restartText.on("pointerdown", this.restartGame, this);
+
+    // --- NEW: Add keyboard listener for the Enter key ---
+    this.input.keyboard?.on("keydown-ENTER", this.restartGame, this);
+  }
+
+  // --- NEW: Reusable restart function ---
+  private restartGame(): void {
+    // Prevent multiple restart triggers
+    this.input.keyboard?.off("keydown-ENTER", this.restartGame, this);
+
+    this.cameras.main.fadeOut(500, 0, 0, 0, (_: any, progress: number) => {
+      if (progress === 1) {
+        this.scene.start(SCENE_KEYS.MAIN);
+      }
     });
   }
 }
