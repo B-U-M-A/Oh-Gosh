@@ -6,8 +6,12 @@ import PauseScene from './scenes/PauseScene'
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: window.innerWidth,
+  height: window.innerHeight,
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
   parent: 'game-container',
   scene: [PreloaderScene, MainScene, GameOverScene, PauseScene],
   physics: {

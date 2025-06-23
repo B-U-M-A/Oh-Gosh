@@ -105,6 +105,7 @@ class GameOverScene extends Phaser.Scene {
 
     this.cameras.main.fadeOut(500, 0, 0, 0, (_: any, progress: number) => {
       if (progress === 1) {
+        this.scene.stop(SCENE_KEYS.GAME_OVER) // Stop the current GameOverScene
         this.scene.start(SCENE_KEYS.MAIN)
       }
     })

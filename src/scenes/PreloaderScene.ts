@@ -38,10 +38,24 @@ class PreloaderScene extends Phaser.Scene {
       console.error(`Security Error: Invalid asset path provided: ${walkAssetPath}`)
       this.loadError = true
     }
+
+    const worldTilesetPath = 'src/assets/tiles/world.png'
+    console.log(`PreloaderScene: isValidAssetPath(${worldTilesetPath}):`, isValidAssetPath(worldTilesetPath))
+    if (isValidAssetPath(worldTilesetPath)) {
+      this.load.spritesheet('world_tileset', worldTilesetPath, {
+        frameWidth: 64,
+        frameHeight: 64,
+      })
+    } else {
+      console.error(`Security Error: Invalid asset path provided: ${worldTilesetPath}`)
+      this.loadError = true
+    }
   }
 
-  create() {
+  create(): void {
     if (this.loadError) {
+      console.error('PreloaderScene: Assets failed to load. Displaying error message.')
+      console.log('PreloaderScene: world_tileset texture exists:', this.textures.exists('world_tileset'))
       // --- Display an error message if assets failed to load ---
       this.add
         .text(

@@ -3,6 +3,12 @@ export const TEXTURE_KEYS = {
   WALK: 'player_character_walk',
 }
 
+export const TILE_KEYS = {
+  GRASS: 'grass_tile',
+  DIRT: 'dirt_tile',
+  DIRT_PATH: 'dirt_path_tile',
+}
+
 export const ANIMATION_KEYS = {
   PLAYER_IDLE: 'player_idle',
   PLAYER_WALK: 'player_walk',
