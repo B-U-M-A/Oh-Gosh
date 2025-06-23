@@ -8,6 +8,9 @@ class MainScene extends Phaser.Scene {
   private wasdCursors?: Phaser.Types.Input.Keyboard.CursorKeys
   private arrowCursors?: Phaser.Types.Input.Keyboard.CursorKeys
   private chaserSpawnTimer?: Phaser.Time.TimerEvent
+  private activeKeys?: Set<number>
+  private wasdCursorsValues: Array<number> = []
+  private arrowCursorsValues: Array<number> = []
 
   private startTime: number = 0
 
@@ -17,13 +20,14 @@ class MainScene extends Phaser.Scene {
 
   constructor() {
     super({ key: SCENE_KEYS.MAIN })
+    this.activeKeys = new Set()
   }
 
   create() {
     try {
-      this.player = this.physics.add.sprite(400, 300, TEXTURE_KEYS.PLAYER)
+      this.player = this.physics.add.sprite(400, 300, TEXTURE_KEYS.IDLE)
       this.player.setCollideWorldBounds(true)
-      this.player.setScale(0.25).play(ANIMATION_KEYS.PLAYER_IDLE)
+      this.player.setScale(1).play(ANIMATION_KEYS.PLAYER_IDLE)
     } catch (error) {
       console.error('Fatal Error: Could not create player sprite. Check if assets loaded correctly.', error)
       // Fallback: Stop the scene and maybe show an error.
@@ -43,12 +47,15 @@ class MainScene extends Phaser.Scene {
       left: Phaser.Input.Keyboard.KeyCodes.A,
       right: Phaser.Input.Keyboard.KeyCodes.D,
     }) as Phaser.Types.Input.Keyboard.CursorKeys
-
+    this.wasdCursorsValues = Object.values(this.wasdCursors ?? {}).map((key) => key.keyCode)
     this.arrowCursors = this.input.keyboard?.createCursorKeys()
+    this.arrowCursorsValues = Object.values(this.arrowCursors ?? {}).map((key) => key.keyCode)
 
     // --- Add keyboard listeners for pausing ---
     this.input.keyboard?.on('keydown-P', this.togglePause, this)
     this.input.keyboard?.on('keydown-ESC', this.togglePause, this)
+    this.input.keyboard?.on('keydown', this.handleKeyDown, this)
+    this.input.keyboard?.on('keyup', this.handleKeyUp, this)
 
     this.chasers = this.physics.add.group()
     this.physics.add.collider(this.chasers, this.chasers)
@@ -66,10 +73,22 @@ class MainScene extends Phaser.Scene {
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.input.keyboard?.off('keydown-P', this.togglePause, this)
       this.input.keyboard?.off('keydown-ESC', this.togglePause, this)
+      this.input.keyboard?.off('keydown', this.handleKeyDown, this)
+      this.input.keyboard?.off('keyup', this.handleKeyUp, this)
       if (this.chaserSpawnTimer) {
         this.chaserSpawnTimer.remove()
       }
     })
+  }
+
+  private handleKeyDown(event: KeyboardEvent): void {
+    this.activeKeys?.add(event.keyCode)
+  }
+
+  private handleKeyUp(event: KeyboardEvent): void {
+    if (this.activeKeys?.has(event.keyCode)) {
+      this.activeKeys?.delete(event.keyCode)
+    }
   }
 
   private togglePause(): void {
@@ -119,6 +138,20 @@ class MainScene extends Phaser.Scene {
 
     const body = this.player.body as Phaser.Physics.Arcade.Body
     body.setVelocity(0)
+
+    if (
+      Array.from(this.activeKeys?.values() ?? []).some(
+        (key) => this.wasdCursorsValues.includes(key) || this.arrowCursorsValues.includes(key),
+      )
+    ) {
+      if (this.player.anims.currentAnim?.key !== ANIMATION_KEYS.PLAYER_WALK) {
+        this.player.play(ANIMATION_KEYS.PLAYER_WALK)
+      }
+    } else {
+      if (this.player.anims.currentAnim?.key !== ANIMATION_KEYS.PLAYER_IDLE) {
+        this.player.play(ANIMATION_KEYS.PLAYER_IDLE)
+      }
+    }
 
     if (this.wasdCursors.left.isDown || this.arrowCursors.left.isDown) {
       body.setVelocityX(-this.speed)

@@ -54,8 +54,8 @@ class GameOverScene extends Phaser.Scene {
 
     // --- 2. Player Sprite with Idle Animation ---
     try {
-      const player = this.add.sprite(this.scale.width / 2, this.scale.height / 2 + 50, TEXTURE_KEYS.PLAYER)
-      player.setScale(0.35)
+      const player = this.add.sprite(this.scale.width / 2, this.scale.height / 2 + 50, TEXTURE_KEYS.IDLE)
+      player.setScale(2)
 
       // --- Defensively play animation only if it exists ---
       if (this.anims.exists(ANIMATION_KEYS.PLAYER_IDLE)) {

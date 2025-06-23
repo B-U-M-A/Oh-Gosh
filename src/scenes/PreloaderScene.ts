@@ -17,14 +17,25 @@ class PreloaderScene extends Phaser.Scene {
     })
 
     // --- Load Player Spritesheet ---
-    const playerAssetPath = 'src/assets/becerrita/idle/becerrite.png'
-    if (isValidAssetPath(playerAssetPath)) {
-      this.load.spritesheet(TEXTURE_KEYS.PLAYER, playerAssetPath, {
-        frameWidth: 512,
-        frameHeight: 512,
+    const idleAssetPath = 'src/assets/becerrita/becerrita-idle.png'
+    if (isValidAssetPath(idleAssetPath)) {
+      this.load.spritesheet(TEXTURE_KEYS.IDLE, idleAssetPath, {
+        frameWidth: 64,
+        frameHeight: 64,
       })
     } else {
-      console.error(`Security Error: Invalid asset path provided: ${playerAssetPath}`)
+      console.error(`Security Error: Invalid asset path provided: ${idleAssetPath}`)
+      this.loadError = true
+    }
+    // --- Load Player Spritesheet ---
+    const walkAssetPath = 'src/assets/becerrita/becerrita-walk.png'
+    if (isValidAssetPath(walkAssetPath)) {
+      this.load.spritesheet(TEXTURE_KEYS.WALK, walkAssetPath, {
+        frameWidth: 64,
+        frameHeight: 64,
+      })
+    } else {
+      console.error(`Security Error: Invalid asset path provided: ${walkAssetPath}`)
       this.loadError = true
     }
   }
@@ -54,10 +65,10 @@ class PreloaderScene extends Phaser.Scene {
 
     // --- Create Player Animations ---
     // Defensively check if the texture exists before creating an animation from it.
-    if (this.textures.exists(TEXTURE_KEYS.PLAYER)) {
+    if (this.textures.exists(TEXTURE_KEYS.IDLE)) {
       this.anims.create({
         key: ANIMATION_KEYS.PLAYER_IDLE,
-        frames: this.anims.generateFrameNumbers(TEXTURE_KEYS.PLAYER, {
+        frames: this.anims.generateFrameNumbers(TEXTURE_KEYS.IDLE, {
           start: 0,
           end: 3,
         }),
@@ -66,7 +77,25 @@ class PreloaderScene extends Phaser.Scene {
       })
     } else {
       // This case should be caught by the 'loaderror' event, but serves as a final guard.
-      console.error(`Texture key not found: ${TEXTURE_KEYS.PLAYER}. Cannot create idle animation.`)
+      console.error(`Texture key not found: ${TEXTURE_KEYS.IDLE}. Cannot create idle animation.`)
+      return
+    }
+
+    // --- Create Player Animations ---
+    // Defensively check if the texture exists before creating an animation from it.
+    if (this.textures.exists(TEXTURE_KEYS.WALK)) {
+      this.anims.create({
+        key: ANIMATION_KEYS.PLAYER_WALK,
+        frames: this.anims.generateFrameNumbers(TEXTURE_KEYS.WALK, {
+          start: 0,
+          end: 3,
+        }),
+        frameRate: 5,
+        repeat: -1,
+      })
+    } else {
+      // This case should be caught by the 'loaderror' event, but serves as a final guard.
+      console.error(`Texture key not found: ${TEXTURE_KEYS.WALK}. Cannot create idle animation.`)
       return
     }
 
