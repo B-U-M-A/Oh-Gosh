@@ -185,7 +185,7 @@ class Level1Scene extends Phaser.Scene {
   private generateChunk(chunkX: number, chunkY: number): Phaser.Tilemaps.Tilemap {
     const chunkKey = `${chunkX}_${chunkY}`
     if (this.loadedChunks.has(chunkKey)) {
-      return this.loadedChunks.get(chunkKey)!
+      return this.loadedChunks.get(chunkKey)! // This '!' is safe due to the has() check
     }
 
     const tileMapData: number[][] = []
@@ -204,12 +204,39 @@ class Level1Scene extends Phaser.Scene {
       tileMapData.push(row)
     }
 
-    const map = this.tileGenerator!.createTilemap(tileMapData)
-    const groundLayer = this.tileGenerator!.createLayer(map, `Ground_${chunkKey}`, 'world_tileset')
-    groundLayer.setDepth(0)
-    groundLayer.x = chunkX * this.CHUNK_SIZE_TILES * this.TILE_SIZE
-    groundLayer.y = chunkY * this.CHUNK_SIZE_TILES * this.TILE_SIZE
-    this.groundLayers!.add(groundLayer)
+    // Explicit checks for tileGenerator and groundLayers
+    if (!this.tileGenerator) {
+      console.error('Level1Scene: TileGenerator is not initialized. Cannot generate chunk.')
+      this.gameOver() // Trigger game over on critical initialization error
+      return this.make.tilemap({ data: [], tileWidth: this.TILE_SIZE, tileHeight: this.TILE_SIZE }) // Return dummy
+    }
+
+    let map: Phaser.Tilemaps.Tilemap
+    try {
+      map = this.tileGenerator.createTilemap(tileMapData)
+    } catch (error) {
+      console.error(`Level1Scene: Failed to create tilemap for chunk ${chunkKey}.`, error)
+      this.gameOver() // Trigger game over
+      return this.make.tilemap({ data: [], tileWidth: this.TILE_SIZE, tileHeight: this.TILE_SIZE }) // Return dummy
+    }
+
+    if (!this.groundLayers) {
+      console.error('Level1Scene: GroundLayers group is not initialized. Cannot add ground layer.')
+      this.gameOver() // Trigger game over on critical initialization error
+      return map // Return the map that was created, even if layer failed
+    }
+
+    try {
+      const groundLayer = this.tileGenerator.createLayer(map, `Ground_${chunkKey}`, 'world_tileset')
+      groundLayer.setDepth(0)
+      groundLayer.x = chunkX * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+      groundLayer.y = chunkY * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+      this.groundLayers.add(groundLayer)
+    } catch (error) {
+      console.error(`Level1Scene: Failed to create ground layer for chunk ${chunkKey}.`, error)
+      this.gameOver() // Trigger game over
+      return map // Return the map that was created, even if layer failed
+    }
 
     this.loadedChunks.set(chunkKey, map)
     return map
@@ -260,11 +287,17 @@ class Level1Scene extends Phaser.Scene {
   }
 
   private spawnChaser(): void {
-    if (
-      this.scene.isPaused() ||
-      !this.scene.isActive(SCENE_KEYS.LEVEL1) ||
-      (this.chasers && this.chasers.getLength() >= this.MAX_CHASERS) // Explicit check for chasers
-    ) {
+    if (this.scene.isPaused() || !this.scene.isActive(SCENE_KEYS.LEVEL1)) {
+      return
+    }
+
+    // Ensure chasers group exists before checking its length or adding to it
+    if (!this.chasers) {
+      console.error('Level1Scene: Chasers group is not initialized. Cannot spawn chaser.')
+      return
+    }
+
+    if (this.chasers.getLength() >= this.MAX_CHASERS) {
       return
     }
 
@@ -280,7 +313,7 @@ class Level1Scene extends Phaser.Scene {
       color: '#FF00FF',
     })
 
-    this.chasers!.add(chaser)
+    this.chasers.add(chaser)
     chaser.setScale(2)
     chaser.setDepth(5) // Ensure chasers are in front of ground layers but behind the player
 
