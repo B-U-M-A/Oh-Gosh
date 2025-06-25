@@ -14,6 +14,10 @@ export const ANIMATION_KEYS = {
   PLAYER_WALK: 'player_walk',
 }
 
+export const AUDIO_KEYS = {
+  COLLISION: 'collision_sound',
+}
+
 export const SCENE_KEYS = {
   PRELOADER: 'PreloaderScene',
   LEVEL1: 'Level1Scene',

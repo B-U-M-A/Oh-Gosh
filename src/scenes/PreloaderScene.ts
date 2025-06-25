@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { isValidAssetPath } from '../utils/security'
-import { TEXTURE_KEYS, ANIMATION_KEYS, SCENE_KEYS } from '../utils/constants'
+import { TEXTURE_KEYS, ANIMATION_KEYS, SCENE_KEYS, AUDIO_KEYS } from '../utils/constants'
 
 class PreloaderScene extends Phaser.Scene {
   private loadError: boolean = false
@@ -48,6 +48,15 @@ class PreloaderScene extends Phaser.Scene {
       })
     } else {
       console.error(`Security Error: Invalid asset path provided: ${worldTilesetPath}`)
+      this.loadError = true
+    }
+
+    // --- Load Audio ---
+    const collisionSoundPath = 'src/assets/audio/boing.flac'
+    if (isValidAssetPath(collisionSoundPath)) {
+      this.load.audio(AUDIO_KEYS.COLLISION, collisionSoundPath)
+    } else {
+      console.error(`Security Error: Invalid asset path provided: ${collisionSoundPath}`)
       this.loadError = true
     }
   }

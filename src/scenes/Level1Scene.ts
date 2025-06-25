@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { sanitizeText } from '../utils/security'
-import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, TILE_KEYS } from '../utils/constants'
+import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, TILE_KEYS, AUDIO_KEYS } from '../utils/constants'
 import { TileGenerator } from '../world/TileGenerator'
 
 class Level1Scene extends Phaser.Scene {
@@ -357,6 +357,9 @@ class Level1Scene extends Phaser.Scene {
   }
 
   gameOver() {
+    // Play sound immediately on collision
+    this.sound.play(AUDIO_KEYS.COLLISION)
+
     // 1. Disable input immediately
     if (this.input.keyboard) {
       this.input.keyboard.enabled = false
