@@ -1,6 +1,5 @@
 import Phaser from 'phaser'
-import { sanitizeText } from '../utils/security'
-import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS } from '../utils/constants'
+import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS, DIFFICULTY } from '../utils/constants'
 import { TileGenerator } from '../world/TileGenerator'
 
 class Level1Scene extends Phaser.Scene {
@@ -12,14 +11,12 @@ class Level1Scene extends Phaser.Scene {
   private chaserSpawnTimer?: Phaser.Time.TimerEvent
 
   private startTime: number = 0
+  private score: number = 0
   private miniMapCamera?: Phaser.Cameras.Scene2D.Camera
   private miniMapBorder?: Phaser.GameObjects.Graphics
-  private isGameOver: boolean = false // Add a flag to prevent multiple game over calls
-  public isMiniMapVisible: boolean = true // Public property to track minimap state
+  private isGameOver: boolean = false
+  public isMiniMapVisible: boolean = true
 
-  private readonly speed = 200
-  private readonly chaserSpeed = 100
-  private readonly MAX_CHASERS = 30
   private tileGenerator?: TileGenerator
   private readonly TILE_SIZE = 64
   private readonly CHUNK_SIZE_TILES = 10 // Each chunk will be 10x10 tiles
@@ -29,8 +26,15 @@ class Level1Scene extends Phaser.Scene {
   private currentChunkX: number = 0
   private currentChunkY: number = 0
 
+  // Difficulty scaling properties
+  private currentChaserSpeed: number
+  private currentSpawnDelay: number
+  private lastDifficultyUpdateScore: number = 0
+
   constructor() {
     super({ key: SCENE_KEYS.LEVEL1 })
+    this.currentChaserSpeed = DIFFICULTY.INITIAL_CHASER_SPEED
+    this.currentSpawnDelay = DIFFICULTY.INITIAL_SPAWN_DELAY
   }
 
   create(): void {
@@ -39,6 +43,10 @@ class Level1Scene extends Phaser.Scene {
       this.input.keyboard.enabled = true
     }
     this.isGameOver = false // Reset the flag on scene creation
+    this.score = 0 // Initialize score
+    this.startTime = this.time.now // Set start time for score calculation
+    this.lastDifficultyUpdateScore = 0 // Reset difficulty tracking
+
     this.tileGenerator = new TileGenerator(this, this.TILE_SIZE)
 
     // Initial chunk generation around the player's starting position
@@ -127,18 +135,22 @@ class Level1Scene extends Phaser.Scene {
       this,
     )
 
-    this.chasers = this.physics.add.group()
-    this.chasers.clear(true, true) // Ensure the group is empty and its children are destroyed on restart
-    this.physics.add.collider(this.chasers, this.chasers)
+    // Initialize chasers group correctly for physics sprites
+    this.chasers = this.physics.add.group({
+      classType: Phaser.Physics.Arcade.Sprite, // Ensure children are sprites
+      runChildUpdate: true, // Allow children to have their own update logic if needed
+    })
 
+    // Add collider between player and chasers
+    this.physics.add.collider(this.player!, this.chasers, this.gameOver, undefined, this)
+
+    // Chaser spawn timer
     this.chaserSpawnTimer = this.time.addEvent({
-      delay: 500,
+      delay: this.currentSpawnDelay,
       callback: this.spawnChaser,
       callbackScope: this,
       loop: true,
     })
-
-    this.startTime = this.time.now
 
     // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -297,33 +309,71 @@ class Level1Scene extends Phaser.Scene {
       return
     }
 
-    if (this.chasers.getLength() >= this.MAX_CHASERS) {
+    // Limit the number of active chasers to prevent performance issues
+    const MAX_CHASERS = 20 // Adjust as needed
+    if (this.chasers.getLength() >= MAX_CHASERS) {
       return
     }
 
-    const { width, height } = this.sys.game.config
-    const sanitizedChar = sanitizeText('C')
+    // Spawn chaser at a random position outside the camera view but within world bounds
+    const camera = this.cameras.main
+    let x, y
+    const spawnPadding = 100 // Distance outside camera view
 
-    const x = Phaser.Math.Between(50, (width as number) - 50)
-    const y = Phaser.Math.Between(50, (height as number) - 50)
+    // Determine spawn side (top, bottom, left, right)
+    const side = Phaser.Math.Between(0, 3)
 
-    const chaser = this.add.text(x, y, sanitizedChar, {
-      fontFamily: "'Comic Sans MS', 'Arial', sans-serif",
-      fontSize: '32px',
-      color: '#FF00FF',
-    })
+    switch (side) {
+      case 0: // Top
+        x = Phaser.Math.Between(camera.worldView.left, camera.worldView.right)
+        y = camera.worldView.top - spawnPadding
+        break
+      case 1: // Bottom
+        x = Phaser.Math.Between(camera.worldView.left, camera.worldView.right)
+        y = camera.worldView.bottom + spawnPadding
+        break
+      case 2: // Left
+        x = camera.worldView.left - spawnPadding
+        y = Phaser.Math.Between(camera.worldView.top, camera.worldView.bottom)
+        break
+      case 3: // Right
+        x = camera.worldView.right + spawnPadding
+        y = Phaser.Math.Between(camera.worldView.top, camera.worldView.bottom)
+        break
+      default:
+        x = camera.worldView.centerX
+        y = camera.worldView.centerY
+        break
+    }
 
-    this.chasers.add(chaser)
-    chaser.setScale(2)
+    // Ensure spawn position is within world bounds
+    const worldWidth = this.WORLD_MAX_CHUNKS_X * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+    const worldHeight = this.WORLD_MAX_CHUNKS_Y * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+    x = Phaser.Math.Clamp(x, 0, worldWidth)
+    y = Phaser.Math.Clamp(y, 0, worldHeight)
+
+    // Create chaser as a sprite and add to physics group
+    const chaser = this.chasers.create(x, y, TEXTURE_KEYS.IDLE) as Phaser.Physics.Arcade.Sprite
+    chaser.setOrigin(0.5, 0.5)
+    chaser.setScale(1.5) // Scale chaser sprite
     chaser.setDepth(5) // Ensure chasers are in front of ground layers but behind the player
+    chaser.setTint(0xff0000) // Red tint for chasers
+    chaser.setCollideWorldBounds(true)
 
-    if (chaser.body instanceof Phaser.Physics.Arcade.Body) {
-      chaser.body.setCollideWorldBounds(true).setBounce(1, 1)
+    // Set chaser velocity towards the player
+    if (this.player) {
+      this.physics.moveToObject(chaser, this.player, this.currentChaserSpeed)
     }
   }
 
   update(): void {
     if (!this.player || !this.player.body || !this.wasdCursors || !this.arrowCursors) return
+
+    // Update score based on time survived
+    if (!this.isGameOver) {
+      this.score = (this.time.now - this.startTime) / 1000 // Score is seconds survived
+      this.updateDifficulty() // Call difficulty scaling logic
+    }
 
     const playerChunkX = Math.floor(this.player.x / (this.CHUNK_SIZE_TILES * this.TILE_SIZE))
     const playerChunkY = Math.floor(this.player.y / (this.CHUNK_SIZE_TILES * this.TILE_SIZE))
@@ -343,6 +393,9 @@ class Level1Scene extends Phaser.Scene {
     const up = this.wasdCursors.up.isDown || this.arrowCursors.up.isDown
     const down = this.wasdCursors.down.isDown || this.arrowCursors.down.isDown
 
+    // Player speed (can be a fixed value or scaled later if needed)
+    const playerSpeed = 200 // Re-introduce player speed constant here or make it a property
+
     if (left || right || up || down) {
       if (this.player.anims.currentAnim?.key !== ANIMATION_KEYS.PLAYER_WALK) {
         this.player.play(ANIMATION_KEYS.PLAYER_WALK)
@@ -354,31 +407,84 @@ class Level1Scene extends Phaser.Scene {
     }
 
     if (left) {
-      body.setVelocityX(-this.speed)
+      body.setVelocityX(-playerSpeed)
+      this.player.setFlipX(true) // Flip sprite to face left
     } else if (right) {
-      body.setVelocityX(this.speed)
+      body.setVelocityX(playerSpeed)
+      this.player.setFlipX(false) // Face right
     }
 
     if (up) {
-      body.setVelocityY(-this.speed)
+      body.setVelocityY(-playerSpeed)
     } else if (down) {
-      body.setVelocityY(this.speed)
+      body.setVelocityY(playerSpeed)
     }
 
     if (body.velocity.x !== 0 && body.velocity.y !== 0) {
-      body.velocity.normalize().scale(this.speed)
+      body.velocity.normalize().scale(playerSpeed)
     }
 
-    if (this.chasers) {
-      this.chasers.getChildren().forEach((chaser) => {
-        if (chaser.body && this.player) {
-          this.physics.moveToObject(chaser as Phaser.GameObjects.GameObject, this.player, this.chaserSpeed)
+    // Chaser movement logic (chasers always move towards the player)
+    this.chasers?.children.each((chaser) => {
+      if (chaser instanceof Phaser.Physics.Arcade.Sprite && this.player) {
+        // Re-target chasers if they are not moving or if player moved significantly
+        // This ensures they keep chasing even if their initial target was slightly off
+        if (
+          chaser.body &&
+          ((chaser.body.velocity.x === 0 && chaser.body.velocity.y === 0) ||
+            Phaser.Math.Distance.Between(chaser.x, chaser.y, this.player.x, this.player.y) > 50)
+        ) {
+          this.physics.moveToObject(chaser, this.player, this.currentChaserSpeed)
+        }
+      }
+    })
+  }
+
+  private updateDifficulty(): void {
+    // Only update difficulty if score has increased enough since last update
+    if (this.score - this.lastDifficultyUpdateScore < DIFFICULTY.DIFFICULTY_UPDATE_INTERVAL_SCORE) {
+      return
+    }
+    this.lastDifficultyUpdateScore = this.score
+
+    // Calculate new chaser speed
+    const newChaserSpeed = Math.min(
+      DIFFICULTY.INITIAL_CHASER_SPEED +
+        Math.floor(this.score / DIFFICULTY.SPEED_INCREASE_INTERVAL_SCORE) * DIFFICULTY.SPEED_INCREASE_AMOUNT,
+      DIFFICULTY.MAX_CHASER_SPEED,
+    )
+
+    // Calculate new spawn delay
+    const newSpawnDelay = Math.max(
+      DIFFICULTY.INITIAL_SPAWN_DELAY -
+        Math.floor(this.score / DIFFICULTY.SPAWN_DECREASE_INTERVAL_SCORE) * DIFFICULTY.SPAWN_DECREASE_AMOUNT,
+      DIFFICULTY.MIN_SPAWN_DELAY,
+    )
+
+    // Update chaser speed if it has changed
+    if (newChaserSpeed !== this.currentChaserSpeed) {
+      this.currentChaserSpeed = newChaserSpeed
+      // Update speed of existing chasers (re-target them with new speed)
+      this.chasers?.children.each((chaser) => {
+        if (chaser instanceof Phaser.Physics.Arcade.Sprite && this.player) {
+          this.physics.moveToObject(chaser, this.player, this.currentChaserSpeed)
         }
       })
+      console.log(`Difficulty: Chaser speed increased to ${this.currentChaserSpeed.toFixed(0)}`)
+    }
 
-      if (this.chasers.getLength() > 0) {
-        this.physics.overlap(this.player, this.chasers, this.gameOver, undefined, this)
-      }
+    // Update spawn delay if it has changed and reset timer
+    if (newSpawnDelay !== this.currentSpawnDelay) {
+      this.currentSpawnDelay = newSpawnDelay
+      this.chaserSpawnTimer?.remove() // Remove old timer
+      this.chaserSpawnTimer = this.time.addEvent({
+        // Add new timer with updated delay
+        delay: this.currentSpawnDelay,
+        callback: this.spawnChaser,
+        callbackScope: this,
+        loop: true,
+      })
+      console.log(`Difficulty: Chaser spawn delay decreased to ${this.currentSpawnDelay.toFixed(0)}ms`)
     }
   }
 
@@ -409,14 +515,14 @@ class Level1Scene extends Phaser.Scene {
     // Stopping the scene will trigger the SHUTDOWN event, which handles further cleanup.
     if (this.scene.manager.keys[SCENE_KEYS.GAME_OVER]) {
       this.scene.stop(SCENE_KEYS.LEVEL1)
-      this.scene.start(SCENE_KEYS.GAME_OVER, { score: finalScore })
+      this.scene.start(SCENE_KEYS.GAME_OVER, { score: finalScore }) // Pass the final score
     } else {
       console.error(`Scene key not found: ${SCENE_KEYS.GAME_OVER}. Cannot show game over screen.`)
       this.scene.stop() // Fallback: just stop the current scene
     }
   }
   private handleResize(gameSize: Phaser.Structs.Size): void {
-    const { width, height } = gameSize
+    const { width } = gameSize
     if (this.miniMapCamera) {
       this.miniMapCamera.setViewport(width - 200, 0, 200, 200)
     }

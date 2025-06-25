@@ -32,7 +32,6 @@ class GameOverScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor('#000000') // Ensure black background
 
-    // Add resize event listener
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
     // Initial layout
@@ -123,8 +122,7 @@ class GameOverScene extends Phaser.Scene {
       this.scoreText.setText(`Your Score: ${this.score.toFixed(2)}`) // Ensure text is updated on resize
     }
 
-    // --- ADD THIS NEW BLOCK for High Score Text ---
-    const highScoreFontSize = Math.max(28, 56 * scaleFactor); // Slightly smaller than current score, but prominent
+    const highScoreFontSize = Math.max(28, 56 * scaleFactor) // Slightly smaller than current score, but prominent
     if (!this.highScoreText) {
       this.highScoreText = this.add
         .text(width / 2, 320 * scaleFactor, `High Score: ${this.highScore.toFixed(2)}`, {
@@ -134,14 +132,13 @@ class GameOverScene extends Phaser.Scene {
           stroke: '#000000',
           strokeThickness: 6 * scaleFactor,
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
     } else {
-      this.highScoreText.setFontSize(`${highScoreFontSize}px`);
-      this.highScoreText.setStroke('#000000', 6 * scaleFactor);
-      this.highScoreText.setPosition(width / 2, 320 * scaleFactor);
-      this.highScoreText.setText(`High Score: ${this.highScore.toFixed(2)}`); // Ensure text is updated on resize
+      this.highScoreText.setFontSize(`${highScoreFontSize}px`)
+      this.highScoreText.setStroke('#000000', 6 * scaleFactor)
+      this.highScoreText.setPosition(width / 2, 320 * scaleFactor)
+      this.highScoreText.setText(`High Score: ${this.highScore.toFixed(2)}`) // Ensure text is updated on resize
     }
-    // --- END NEW BLOCK ---
 
     // --- 2. Player Sprite with Idle Animation ---
     const playerScale = 2 * scaleFactor * 2
@@ -205,7 +202,7 @@ class GameOverScene extends Phaser.Scene {
       return
     }
 
-    this.cameras.main.fadeOut(500, 0, 0, 0, (_: any, progress: number) => {
+    this.cameras.main.fadeOut(500, 0, 0, 0, (_: Phaser.Cameras.Scene2D.Camera, progress: number) => {
       if (progress === 1) {
         this.scene.stop(SCENE_KEYS.GAME_OVER) // Stop the current GameOverScene
         this.scene.start(SCENE_KEYS.MAIN_MENU) // Go back to MainMenuScene
