@@ -17,6 +17,7 @@ class Level1Scene extends Phaser.Scene {
   private startTime: number = 0
   private miniMapCamera?: Phaser.Cameras.Scene2D.Camera
   private miniMapBorder?: Phaser.GameObjects.Graphics
+  private isGameOver: boolean = false // Add a flag to prevent multiple game over calls
 
   private readonly speed = 200
   private readonly chaserSpeed = 100
@@ -40,6 +41,7 @@ class Level1Scene extends Phaser.Scene {
       this.input.keyboard.enabled = true
     }
     this.activeKeys = new Set() // Re-initialize activeKeys on scene creation
+    this.isGameOver = false // Reset the flag on scene creation
     this.tileGenerator = new TileGenerator(this, this.TILE_SIZE)
 
     // Initial chunk generation around the player's starting position
@@ -357,6 +359,12 @@ class Level1Scene extends Phaser.Scene {
   }
 
   gameOver() {
+    // State guard: Ensure this method's logic only runs once
+    if (this.isGameOver) {
+      return
+    }
+    this.isGameOver = true
+
     // Play sound immediately on collision
     this.sound.play(AUDIO_KEYS.COLLISION)
 
