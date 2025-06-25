@@ -3,7 +3,7 @@ import { sanitizeText } from '../utils/security'
 import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, TILE_KEYS } from '../utils/constants'
 import { TileGenerator } from '../world/TileGenerator'
 
-class MainScene extends Phaser.Scene {
+class Level1Scene extends Phaser.Scene {
   private player?: Phaser.Physics.Arcade.Sprite
   private chasers?: Phaser.Physics.Arcade.Group
   private groundLayers?: Phaser.Physics.Arcade.Group // New group for ground layers
@@ -31,7 +31,7 @@ class MainScene extends Phaser.Scene {
   private currentChunkY: number = 0
 
   constructor() {
-    super({ key: SCENE_KEYS.MAIN })
+    super({ key: SCENE_KEYS.LEVEL1 })
   }
 
   create(): void {
@@ -119,6 +119,9 @@ class MainScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown', this.handleKeyDown, this)
     this.input.keyboard?.on('keyup', this.handleKeyUp, this)
 
+    // Add event listener for when the game loses focus (blurs)
+    this.sys.game.events.on('blur', this.handleGameBlur, this)
+
     this.chasers = this.physics.add.group()
     this.chasers.clear(true, true) // Ensure the group is empty and its children are destroyed on restart
     this.physics.add.collider(this.chasers, this.chasers)
@@ -167,7 +170,17 @@ class MainScene extends Phaser.Scene {
       this.chasers = undefined
       this.miniMapCamera = undefined // Nullify miniMapCamera reference
       this.miniMapBorder = undefined // Nullify miniMapBorder reference
+
+      // Remove blur event listener on shutdown
+      this.sys.game.events.off('blur', this.handleGameBlur, this)
     })
+  }
+
+  private handleGameBlur(): void {
+    // Pause the scene when the game window loses focus
+    if (!this.scene.isPaused()) {
+      this.togglePause()
+    }
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
@@ -256,7 +269,7 @@ class MainScene extends Phaser.Scene {
   private spawnChaser(): void {
     if (
       this.scene.isPaused() ||
-      !this.scene.isActive(SCENE_KEYS.MAIN) ||
+      !this.scene.isActive(SCENE_KEYS.LEVEL1) ||
       (this.chasers && this.chasers.getLength() >= this.MAX_CHASERS) // Explicit check for chasers
     ) {
       return
@@ -350,17 +363,17 @@ class MainScene extends Phaser.Scene {
     }
 
     // 2. Pause the scene to stop update() loop and other scene processing
-    this.scene.pause(SCENE_KEYS.MAIN) // Explicitly pause this scene
+    this.scene.pause(SCENE_KEYS.LEVEL1) // Explicitly pause this scene
 
     // 3. Remove chaser spawn timer
     this.chaserSpawnTimer?.remove(false)
 
     const finalScore = (this.time.now - this.startTime) / 1000
 
-    // 4. Stop MainScene and start GameOverScene
+    // 4. Stop Level1Scene and start GameOverScene
     // Stopping the scene will trigger the SHUTDOWN event, which handles further cleanup.
     if (this.scene.manager.keys[SCENE_KEYS.GAME_OVER]) {
-      this.scene.stop(SCENE_KEYS.MAIN)
+      this.scene.stop(SCENE_KEYS.LEVEL1)
       this.scene.start(SCENE_KEYS.GAME_OVER, { score: finalScore })
     } else {
       console.error(`Scene key not found: ${SCENE_KEYS.GAME_OVER}. Cannot show game over screen.`)
@@ -384,4 +397,4 @@ class MainScene extends Phaser.Scene {
   }
 }
 
-export default MainScene
+export default Level1Scene

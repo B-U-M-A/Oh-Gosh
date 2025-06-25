@@ -16,7 +16,9 @@ export const ANIMATION_KEYS = {
 
 export const SCENE_KEYS = {
   PRELOADER: 'PreloaderScene',
-  MAIN: 'MainScene',
+  LEVEL1: 'Level1Scene',
   GAME_OVER: 'GameOverScene',
   PAUSE: 'PauseScene',
+  MAIN_MENU: 'MainMenuScene',
+  CREDITS: 'CreditsScene',
 }

@@ -1,8 +1,10 @@
 import Phaser from 'phaser'
 import GameOverScene from './scenes/GameOverScene'
-import MainScene from './scenes/MainScene'
+import Level1Scene from './scenes/Level1Scene'
 import PreloaderScene from './scenes/PreloaderScene'
 import PauseScene from './scenes/PauseScene'
+import CreditsScene from './scenes/CreditsScene'
+import MainMenuScene from './scenes/MainMenuScene'
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -13,7 +15,7 @@ const config: Phaser.Types.Core.GameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   parent: 'game-container',
-  scene: [PreloaderScene, MainScene, GameOverScene, PauseScene],
+  scene: [PreloaderScene, MainMenuScene, Level1Scene, GameOverScene, PauseScene, CreditsScene],
   physics: {
     default: 'arcade',
     arcade: {

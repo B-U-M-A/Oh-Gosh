@@ -116,7 +116,7 @@ class PreloaderScene extends Phaser.Scene {
     // --- Start the Main Scene ---
     // All assets are now in the cache and animations are created,
     // so we can safely start the main game scene.
-    this.scene.start(SCENE_KEYS.MAIN)
+    this.scene.start(SCENE_KEYS.MAIN_MENU)
   }
 }
 
