@@ -1,10 +1,12 @@
 import Phaser from 'phaser'
-import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS } from '../utils/constants'
+import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS, LOCAL_STORAGE_KEYS } from '../utils/constants'
 
 class GameOverScene extends Phaser.Scene {
   private score: number = 0
   private gameOverText?: Phaser.GameObjects.Text
   private scoreText?: Phaser.GameObjects.Text
+  private highScore: number = 0
+  private highScoreText?: Phaser.GameObjects.Text
   private playerSprite?: Phaser.GameObjects.Sprite
   private restartButton?: Phaser.GameObjects.Text
 
@@ -14,6 +16,17 @@ class GameOverScene extends Phaser.Scene {
 
   init(data: { score?: number }) {
     this.score = data.score || 0
+
+    // Retrieve high score from local storage
+    const storedHighScore = localStorage.getItem(LOCAL_STORAGE_KEYS.HIGH_SCORE)
+    let currentHighScore = storedHighScore ? parseInt(storedHighScore, 10) : 0
+
+    // Update high score if current score is higher
+    if (this.score > currentHighScore) {
+      currentHighScore = this.score
+      localStorage.setItem(LOCAL_STORAGE_KEYS.HIGH_SCORE, currentHighScore.toString())
+    }
+    this.highScore = currentHighScore // Store the high score for display
   }
 
   create() {
@@ -35,6 +48,7 @@ class GameOverScene extends Phaser.Scene {
       // Nullify references to allow garbage collection
       this.gameOverText = undefined
       this.scoreText = undefined
+      this.highScoreText = undefined
       this.playerSprite = undefined
       this.restartButton = undefined
     })
@@ -106,7 +120,28 @@ class GameOverScene extends Phaser.Scene {
       this.scoreText.setFontSize(`${scoreFontSize}px`)
       this.scoreText.setStroke('#000000', 6 * scaleFactor)
       this.scoreText.setPosition(width / 2, 250 * scaleFactor)
+      this.scoreText.setText(`Your Score: ${this.score.toFixed(2)}`) // Ensure text is updated on resize
     }
+
+    // --- ADD THIS NEW BLOCK for High Score Text ---
+    const highScoreFontSize = Math.max(28, 56 * scaleFactor); // Slightly smaller than current score, but prominent
+    if (!this.highScoreText) {
+      this.highScoreText = this.add
+        .text(width / 2, 320 * scaleFactor, `High Score: ${this.highScore.toFixed(2)}`, {
+          fontFamily: 'Staatliches',
+          fontSize: `${highScoreFontSize}px`,
+          color: '#ffff00', // Yellow color for high score
+          stroke: '#000000',
+          strokeThickness: 6 * scaleFactor,
+        })
+        .setOrigin(0.5);
+    } else {
+      this.highScoreText.setFontSize(`${highScoreFontSize}px`);
+      this.highScoreText.setStroke('#000000', 6 * scaleFactor);
+      this.highScoreText.setPosition(width / 2, 320 * scaleFactor);
+      this.highScoreText.setText(`High Score: ${this.highScore.toFixed(2)}`); // Ensure text is updated on resize
+    }
+    // --- END NEW BLOCK ---
 
     // --- 2. Player Sprite with Idle Animation ---
     const playerScale = 2 * scaleFactor * 2

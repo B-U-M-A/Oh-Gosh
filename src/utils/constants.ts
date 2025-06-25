@@ -26,3 +26,7 @@ export const SCENE_KEYS = {
   MAIN_MENU: 'MainMenuScene',
   CREDITS: 'CreditsScene',
 }
+
+export const LOCAL_STORAGE_KEYS = {
+  HIGH_SCORE: 'becerrita_high_score',
+};
