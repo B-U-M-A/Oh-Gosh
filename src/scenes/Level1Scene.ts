@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { sanitizeText } from '../utils/security'
-import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, TILE_KEYS, AUDIO_KEYS } from '../utils/constants'
+import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS } from '../utils/constants'
 import { TileGenerator } from '../world/TileGenerator'
 
 class Level1Scene extends Phaser.Scene {
@@ -10,18 +10,16 @@ class Level1Scene extends Phaser.Scene {
   private wasdCursors?: Phaser.Types.Input.Keyboard.CursorKeys
   private arrowCursors?: Phaser.Types.Input.Keyboard.CursorKeys
   private chaserSpawnTimer?: Phaser.Time.TimerEvent
-  private activeKeys?: Set<number>
-  private wasdCursorsValues: Array<number> = []
-  private arrowCursorsValues: Array<number> = []
 
   private startTime: number = 0
   private miniMapCamera?: Phaser.Cameras.Scene2D.Camera
   private miniMapBorder?: Phaser.GameObjects.Graphics
   private isGameOver: boolean = false // Add a flag to prevent multiple game over calls
+  public isMiniMapVisible: boolean = true // Public property to track minimap state
 
   private readonly speed = 200
   private readonly chaserSpeed = 100
-  private readonly MAX_CHASERS = 3
+  private readonly MAX_CHASERS = 30
   private tileGenerator?: TileGenerator
   private readonly TILE_SIZE = 64
   private readonly CHUNK_SIZE_TILES = 10 // Each chunk will be 10x10 tiles
@@ -40,7 +38,6 @@ class Level1Scene extends Phaser.Scene {
     if (this.input.keyboard) {
       this.input.keyboard.enabled = true
     }
-    this.activeKeys = new Set() // Re-initialize activeKeys on scene creation
     this.isGameOver = false // Reset the flag on scene creation
     this.tileGenerator = new TileGenerator(this, this.TILE_SIZE)
 
@@ -76,7 +73,6 @@ class Level1Scene extends Phaser.Scene {
         .setName('miniMap') // Zoom out to show more of the world
       this.miniMapCamera.setBackgroundColor(0x000000) // Black background for mini-map
       this.miniMapCamera.startFollow(this.player) // Mini-map also follows the player
-      // Removed: this.miniMapCamera.setScroll(playerX - this.miniMapCamera.width / 2, playerY - this.miniMapCamera.height / 2)
       this.miniMapCamera.setViewport(this.scale.width - 200, 0, 200, 200) // Ensure correct viewport after setting zoom
       this.miniMapCamera.setOrigin(0.5, 0.5) // Set origin to center for easier positioning
       this.miniMapCamera.setAlpha(0.7) // Add opacity to the minimap
@@ -85,13 +81,9 @@ class Level1Scene extends Phaser.Scene {
         .setScrollFactor(0) // Make the border fixed on the camera
         .lineStyle(2, 0x00ff00, 1) // Green border, 2 pixels thick
         .strokeRect(this.scale.width - 200, 0, 200, 200) // Draw border around minimap viewport
-      // this.miniMapCamera.ignore(this.chasers) // Don't show chasers on mini-map
 
       // Add resize event listener
       this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
-
-      // Collisions with the world bounds are handled by setCollideWorldBounds(true) on the player.
-      // Individual tile collisions are not needed for a fully walkable floor.
     } catch (error) {
       console.error('Fatal Error: Could not create player sprite. Check if assets loaded correctly.', error)
       // Fallback: Stop the scene and maybe show an error.
@@ -111,27 +103,33 @@ class Level1Scene extends Phaser.Scene {
       left: Phaser.Input.Keyboard.KeyCodes.A,
       right: Phaser.Input.Keyboard.KeyCodes.D,
     }) as Phaser.Types.Input.Keyboard.CursorKeys
-    this.wasdCursorsValues = Object.values(this.wasdCursors ?? {}).map((key) => key.keyCode)
+
     this.arrowCursors = this.input.keyboard?.createCursorKeys()
-    this.arrowCursorsValues = Object.values(this.arrowCursors ?? {}).map((key) => key.keyCode)
 
     // --- Add keyboard listeners for pausing ---
     this.input.keyboard?.on('keydown-P', this.togglePause, this)
     this.input.keyboard?.on('keydown-ESC', this.togglePause, this)
-    this.input.keyboard?.on('keydown', this.handleKeyDown, this)
-    this.input.keyboard?.on('keyup', this.handleKeyUp, this)
 
     // Add event listener for when the game loses focus (blurs)
     this.sys.game.events.on('blur', this.handleGameBlur, this)
+
+    // Add event listener for when the scene resumes
+    this.events.on(
+      Phaser.Scenes.Events.RESUME,
+      () => {
+        if (this.input.keyboard) {
+          this.input.keyboard.enabled = true
+        }
+      },
+      this,
+    )
 
     this.chasers = this.physics.add.group()
     this.chasers.clear(true, true) // Ensure the group is empty and its children are destroyed on restart
     this.physics.add.collider(this.chasers, this.chasers)
 
-    // Removed: Collision with groundLayers group, as individual tiles should not block movement.
-
     this.chaserSpawnTimer = this.time.addEvent({
-      delay: 7000,
+      delay: 500,
       callback: this.spawnChaser,
       callbackScope: this,
       loop: true,
@@ -144,11 +142,9 @@ class Level1Scene extends Phaser.Scene {
       // 1. Stop processing new input events
       this.input.keyboard?.off('keydown-P', this.togglePause, this)
       this.input.keyboard?.off('keydown-ESC', this.togglePause, this)
-      this.input.keyboard?.off('keydown', this.handleKeyDown, this)
-      this.input.keyboard?.off('keyup', this.handleKeyUp, this)
+      this.events.off(Phaser.Scenes.Events.RESUME) // Clean up resume listener
 
       // 2. Nullify input-related properties immediately after removing listeners
-      this.activeKeys = undefined
       this.wasdCursors = undefined
       this.arrowCursors = undefined
 
@@ -159,19 +155,18 @@ class Level1Scene extends Phaser.Scene {
       }
 
       // 4. Explicitly destroy Tilemap objects from loadedChunks
-      // Destroying the Tilemap should also destroy its associated layers.
       this.loadedChunks.forEach((tilemap) => {
         tilemap.destroy()
       })
-      this.loadedChunks.clear() // Clear the map itself
+      this.loadedChunks.clear()
 
-      // 5. Nullify remaining references (Phaser's scene manager should handle destruction)
+      // 5. Nullify remaining references
       this.player = undefined
       this.tileGenerator = undefined
       this.groundLayers = undefined
       this.chasers = undefined
-      this.miniMapCamera = undefined // Nullify miniMapCamera reference
-      this.miniMapBorder = undefined // Nullify miniMapBorder reference
+      this.miniMapCamera = undefined
+      this.miniMapBorder = undefined
 
       // Remove blur event listener on shutdown
       this.sys.game.events.off('blur', this.handleGameBlur, this)
@@ -179,15 +174,9 @@ class Level1Scene extends Phaser.Scene {
   }
 
   private handleGameBlur(): void {
-    // Pause the scene when the game window loses focus
     if (!this.scene.isPaused()) {
       this.togglePause()
     }
-  }
-
-  private handleKeyDown(event: KeyboardEvent): void {
-    if (!this.activeKeys) return // Defensive check
-    this.activeKeys.add(event.keyCode)
   }
 
   private generateChunk(chunkX: number, chunkY: number): Phaser.Tilemaps.Tilemap {
@@ -214,11 +203,10 @@ class Level1Scene extends Phaser.Scene {
 
     const map = this.tileGenerator!.createTilemap(tileMapData)
     const groundLayer = this.tileGenerator!.createLayer(map, `Ground_${chunkKey}`, 'world_tileset')
-    groundLayer.setDepth(0) // Ensure ground layers are at the bottom
-    // Removed: setCollisionByProperty as all tiles are walkable.
+    groundLayer.setDepth(0)
     groundLayer.x = chunkX * this.CHUNK_SIZE_TILES * this.TILE_SIZE
     groundLayer.y = chunkY * this.CHUNK_SIZE_TILES * this.TILE_SIZE
-    this.groundLayers!.add(groundLayer) // Add the newly created layer to the group
+    this.groundLayers!.add(groundLayer)
 
     this.loadedChunks.set(chunkKey, map)
     return map
@@ -248,15 +236,12 @@ class Level1Scene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight)
   }
 
-  private handleKeyUp(event: KeyboardEvent): void {
-    if (!this.activeKeys) return // Defensive check
-    if (this.activeKeys.has(event.keyCode)) {
-      this.activeKeys.delete(event.keyCode)
-    }
-  }
-
   private togglePause(): void {
     if (!this.scene.isPaused()) {
+      // Disable keyboard before pausing to prevent input issues on resume
+      if (this.input.keyboard) {
+        this.input.keyboard.enabled = false
+      }
       this.scene.pause()
 
       if (this.scene.manager.keys[SCENE_KEYS.PAUSE]) {
@@ -264,6 +249,9 @@ class Level1Scene extends Phaser.Scene {
       } else {
         console.error(`Pause scene key not found: ${SCENE_KEYS.PAUSE}. Cannot pause game.`)
         this.scene.resume()
+        if (this.input.keyboard) {
+          this.input.keyboard.enabled = true
+        }
       }
     }
   }
@@ -313,11 +301,13 @@ class Level1Scene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body
     body.setVelocity(0)
 
-    if (
-      Array.from(this.activeKeys?.values() ?? []).some(
-        (key) => this.wasdCursorsValues.includes(key) || this.arrowCursorsValues.includes(key),
-      )
-    ) {
+    // --- Unified Input and Animation ---
+    const left = this.wasdCursors.left.isDown || this.arrowCursors.left.isDown
+    const right = this.wasdCursors.right.isDown || this.arrowCursors.right.isDown
+    const up = this.wasdCursors.up.isDown || this.arrowCursors.up.isDown
+    const down = this.wasdCursors.down.isDown || this.arrowCursors.down.isDown
+
+    if (left || right || up || down) {
       if (this.player.anims.currentAnim?.key !== ANIMATION_KEYS.PLAYER_WALK) {
         this.player.play(ANIMATION_KEYS.PLAYER_WALK)
       }
@@ -327,15 +317,15 @@ class Level1Scene extends Phaser.Scene {
       }
     }
 
-    if (this.wasdCursors.left.isDown || this.arrowCursors.left.isDown) {
+    if (left) {
       body.setVelocityX(-this.speed)
-    } else if (this.wasdCursors.right.isDown || this.arrowCursors.right.isDown) {
+    } else if (right) {
       body.setVelocityX(this.speed)
     }
 
-    if (this.wasdCursors.up.isDown || this.arrowCursors.up.isDown) {
+    if (up) {
       body.setVelocityY(-this.speed)
-    } else if (this.wasdCursors.down.isDown || this.arrowCursors.down.isDown) {
+    } else if (down) {
       body.setVelocityY(this.speed)
     }
 
@@ -344,7 +334,6 @@ class Level1Scene extends Phaser.Scene {
     }
 
     if (this.chasers) {
-      // Explicit check for chasers
       this.chasers.getChildren().forEach((chaser) => {
         if (chaser.body && this.player) {
           this.physics.moveToObject(chaser as Phaser.GameObjects.GameObject, this.player, this.chaserSpeed)
@@ -352,7 +341,6 @@ class Level1Scene extends Phaser.Scene {
       })
 
       if (this.chasers.getLength() > 0) {
-        // No optional chaining needed here due to outer if
         this.physics.overlap(this.player, this.chasers, this.gameOver, undefined, this)
       }
     }
@@ -395,15 +383,28 @@ class Level1Scene extends Phaser.Scene {
     const { width, height } = gameSize
     if (this.miniMapCamera) {
       this.miniMapCamera.setViewport(width - 200, 0, 200, 200)
-      // Removed: this.miniMapCamera.setScroll(
-      //   this.player!.x - this.miniMapCamera.width / 2,
-      //   this.player!.y - this.miniMapCamera.height / 2,
-      // )
     }
     if (this.miniMapBorder) {
       this.miniMapBorder.clear()
       this.miniMapBorder.lineStyle(2, 0x00ff00, 1)
       this.miniMapBorder.strokeRect(width - 200, 0, 200, 200)
+    }
+  }
+
+  /**
+   * Toggles the visibility of the minimap.
+   * If a 'visible' boolean is provided, it sets the visibility to that state.
+   * Otherwise, it toggles the current visibility state.
+   * @param visible - Optional boolean to set the minimap's visibility.
+   */
+  public toggleMiniMap(visible?: boolean): void {
+    this.isMiniMapVisible = visible !== undefined ? visible : !this.isMiniMapVisible
+
+    if (this.miniMapCamera) {
+      this.miniMapCamera.setVisible(this.isMiniMapVisible)
+    }
+    if (this.miniMapBorder) {
+      this.miniMapBorder.setVisible(this.isMiniMapVisible)
     }
   }
 }
