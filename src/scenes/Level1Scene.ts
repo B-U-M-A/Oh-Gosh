@@ -1,9 +1,8 @@
 import Phaser from 'phaser'
 import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS, DIFFICULTY } from '../utils/constants'
 import { TileGenerator } from '../world/TileGenerator'
-import { EnemyFactory } from '../game/EnemyFactory';
-import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData'; // Add this import
-
+import { EnemyFactory } from '../game/EnemyFactory'
+import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData' // Add this import
 
 class Level1Scene extends Phaser.Scene {
   private player?: Phaser.Physics.Arcade.Sprite
@@ -356,13 +355,13 @@ class Level1Scene extends Phaser.Scene {
     y = Phaser.Math.Clamp(y, 0, worldHeight)
 
     // Get the configuration for the basic chaser enemy
-    const chaserConfig = ENEMY_CONFIGS[ENEMY_TYPES.BASIC_CHASER];
+    const chaserConfig = ENEMY_CONFIGS[ENEMY_TYPES.BASIC_CHASER]
 
     // Use the EnemyFactory to create the chaser sprite
-    const chaser = EnemyFactory.createEnemy(this, chaserConfig, x, y);
+    const chaser = EnemyFactory.createEnemy(this, chaserConfig, x, y)
 
     // Add the created chaser to the chasers group
-    this.chasers.add(chaser);
+    this.chasers.add(chaser)
 
     // The chaser's speed is still dynamically controlled by difficulty scaling
     // and applied here after creation.
