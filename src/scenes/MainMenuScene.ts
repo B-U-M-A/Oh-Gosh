@@ -98,6 +98,17 @@ class MainMenuScene extends Phaser.Scene {
 
     // Add resize event listener
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+
+    // --- Clean up listeners on scene shutdown ---
+    this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+      // Nullify references to allow garbage collection
+      this.player = undefined
+      this.titleText = undefined
+      this.fastPlayButton = undefined
+      this.selectLevelButton = undefined
+      this.creditsButton = undefined
+    })
   }
 
   private handleResize(gameSize: Phaser.Structs.Size): void {

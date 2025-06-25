@@ -21,6 +21,29 @@ class PauseScene extends Phaser.Scene {
     // --- Keyboard listener to resume the game ---
     this.input.keyboard?.on('keydown-P', this.resumeGame, this)
     this.input.keyboard?.on('keydown-ESC', this.resumeGame, this)
+
+    // --- Clean up listeners and objects on scene shutdown ---
+    this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this) // Remove resize listener
+      this.input.keyboard?.off('keydown-P', this.resumeGame, this)
+      this.input.keyboard?.off('keydown-ESC', this.resumeGame, this)
+
+      // Destroy game objects and nullify references
+      this.backgroundRect?.destroy()
+      this.pausedText?.destroy()
+      this.resumeText?.destroy()
+      this.backToMenuButton?.destroy()
+
+      this.backgroundRect = undefined
+      this.pausedText = undefined
+      this.resumeText = undefined
+      this.backToMenuButton = undefined
+
+      // Stop and destroy any active tweens on resumeText
+      if (this.resumeText) {
+        this.tweens.killTweensOf(this.resumeText)
+      }
+    })
   }
 
   private handleResize(gameSize: Phaser.Structs.Size): void {

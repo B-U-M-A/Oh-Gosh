@@ -22,6 +22,19 @@ class CreditsScene extends Phaser.Scene {
 
     // Initial layout
     this.handleResize(this.scale.gameSize)
+
+    // --- Clean up listeners on scene shutdown ---
+    this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+      // Nullify references to allow garbage collection
+      this.titleText = undefined
+      this.purposeText = undefined
+      this.developersTitle = undefined
+      this.developersText = undefined
+      this.artistsTitle = undefined
+      this.artistsText = undefined
+      this.backButton = undefined
+    })
   }
 
   private handleResize(gameSize: Phaser.Structs.Size): void {
