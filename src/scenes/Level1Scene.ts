@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS, DIFFICULTY } from '../utils/constants'
+import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS, DIFFICULTY, WIN_CONDITION } from '../utils/constants'
 import { TileGenerator } from '../world/TileGenerator'
 import { EnemyFactory } from '../game/EnemyFactory'
 import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData' // Add this import
@@ -11,6 +11,7 @@ class Level1Scene extends Phaser.Scene {
   private wasdCursors?: Phaser.Types.Input.Keyboard.CursorKeys
   private arrowCursors?: Phaser.Types.Input.Keyboard.CursorKeys
   private chaserSpawnTimer?: Phaser.Time.TimerEvent
+  private winTimerEvent?: Phaser.Time.TimerEvent // New: Timer for win condition
 
   private startTime: number = 0
   private score: number = 0
@@ -33,10 +34,15 @@ class Level1Scene extends Phaser.Scene {
   private currentSpawnDelay: number
   private lastDifficultyUpdateScore: number = 0
 
+  // Win condition properties
+  private winTimeRemaining: number
+  private countdownText?: Phaser.GameObjects.Text
+
   constructor() {
     super({ key: SCENE_KEYS.LEVEL1 })
     this.currentChaserSpeed = DIFFICULTY.INITIAL_CHASER_SPEED
     this.currentSpawnDelay = DIFFICULTY.INITIAL_SPAWN_DELAY
+    this.winTimeRemaining = WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000 // Convert to seconds
   }
 
   create(): void {
@@ -48,6 +54,7 @@ class Level1Scene extends Phaser.Scene {
     this.score = 0 // Initialize score
     this.startTime = this.time.now // Set start time for score calculation
     this.lastDifficultyUpdateScore = 0 // Reset difficulty tracking
+    this.winTimeRemaining = WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000 // Reset win timer
 
     this.tileGenerator = new TileGenerator(this, this.TILE_SIZE)
 
@@ -91,6 +98,19 @@ class Level1Scene extends Phaser.Scene {
         .setScrollFactor(0) // Make the border fixed on the camera
         .lineStyle(2, 0x00ff00, 1) // Green border, 2 pixels thick
         .strokeRect(this.scale.width - 200, 0, 200, 200) // Draw border around minimap viewport
+
+      // Add countdown text for win condition
+      this.countdownText = this.add
+        .text(this.scale.width / 2, 50, `Survive: ${this.winTimeRemaining.toFixed(0)}s`, {
+          fontFamily: 'Staatliches',
+          fontSize: '32px',
+          color: '#ffffff',
+          stroke: '#000000',
+          strokeThickness: 6,
+        })
+        .setOrigin(0.5)
+        .setScrollFactor(0) // Fixed on camera
+        .setDepth(5)
 
       // Add resize event listener
       this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
@@ -154,6 +174,14 @@ class Level1Scene extends Phaser.Scene {
       loop: true,
     })
 
+    // Win condition timer
+    this.winTimerEvent = this.time.addEvent({
+      delay: 1000, // Update every second
+      callback: this.updateCountdown,
+      callbackScope: this,
+      loop: true,
+    })
+
     // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       // 1. Stop processing new input events
@@ -170,6 +198,10 @@ class Level1Scene extends Phaser.Scene {
         this.chaserSpawnTimer.remove()
         this.chaserSpawnTimer = undefined // Nullify here too
       }
+      if (this.winTimerEvent) {
+        this.winTimerEvent.remove()
+        this.winTimerEvent = undefined
+      }
 
       // 4. Explicitly destroy Tilemap objects from loadedChunks
       this.loadedChunks.forEach((tilemap) => {
@@ -184,6 +216,7 @@ class Level1Scene extends Phaser.Scene {
       this.chasers = undefined
       this.miniMapCamera = undefined
       this.miniMapBorder = undefined
+      this.countdownText = undefined
 
       // Remove blur event listener on shutdown
       this.sys.game.events.off('blur', this.handleGameBlur, this)
@@ -371,12 +404,16 @@ class Level1Scene extends Phaser.Scene {
   }
 
   update(): void {
-    if (!this.player || !this.player.body || !this.wasdCursors || !this.arrowCursors) return
+    if (!this.player || !this.player.body || !this.wasdCursors || !this.arrowCursors || this.isGameOver) return
 
     // Update score based on time survived
-    if (!this.isGameOver) {
-      this.score = (this.time.now - this.startTime) / 1000 // Score is seconds survived
-      this.updateDifficulty() // Call difficulty scaling logic
+    this.score = (this.time.now - this.startTime) / 1000 // Score is seconds survived
+    this.updateDifficulty() // Call difficulty scaling logic
+
+    // Check win condition
+    if (this.winTimeRemaining <= 0 && !this.isGameOver) {
+      this.winGame()
+      return // Stop further updates if game is won
     }
 
     const playerChunkX = Math.floor(this.player.x / (this.CHUNK_SIZE_TILES * this.TILE_SIZE))
@@ -442,6 +479,19 @@ class Level1Scene extends Phaser.Scene {
         }
       }
     })
+  }
+
+  private updateCountdown(): void {
+    if (this.isGameOver) return // Stop countdown if game is over
+
+    this.winTimeRemaining--
+    if (this.countdownText) {
+      this.countdownText.setText(`Survive: ${Math.max(0, this.winTimeRemaining).toFixed(0)}s`)
+    }
+
+    if (this.winTimeRemaining <= 0) {
+      this.winGame()
+    }
   }
 
   private updateDifficulty(): void {
@@ -510,8 +560,9 @@ class Level1Scene extends Phaser.Scene {
     // 2. Pause the scene to stop update() loop and other scene processing
     this.scene.pause(SCENE_KEYS.LEVEL1) // Explicitly pause this scene
 
-    // 3. Remove chaser spawn timer
+    // 3. Remove timers
     this.chaserSpawnTimer?.remove(false)
+    this.winTimerEvent?.remove(false) // Remove win timer too
 
     const finalScore = (this.time.now - this.startTime) / 1000
 
@@ -525,6 +576,38 @@ class Level1Scene extends Phaser.Scene {
       this.scene.stop() // Fallback: just stop the current scene
     }
   }
+
+  winGame() {
+    // State guard: Ensure this method's logic only runs once
+    if (this.isGameOver) {
+      return
+    }
+    this.isGameOver = true // Use isGameOver as a general game-ended flag
+
+    // 1. Disable input immediately
+    if (this.input.keyboard) {
+      this.input.keyboard.enabled = false
+    }
+
+    // 2. Pause the scene to stop update() loop and other scene processing
+    this.scene.pause(SCENE_KEYS.LEVEL1)
+
+    // 3. Remove timers
+    this.chaserSpawnTimer?.remove(false)
+    this.winTimerEvent?.remove(false)
+
+    const finalScore = (this.time.now - this.startTime) / 1000
+
+    // 4. Stop Level1Scene and start WinScene
+    if (this.scene.manager.keys[SCENE_KEYS.WIN]) {
+      this.scene.stop(SCENE_KEYS.LEVEL1)
+      this.scene.start(SCENE_KEYS.WIN, { score: finalScore }) // Pass the final score
+    } else {
+      console.error(`Scene key not found: ${SCENE_KEYS.WIN}. Cannot show win screen.`)
+      this.scene.stop() // Fallback: just stop the current scene
+    }
+  }
+
   private handleResize(gameSize: Phaser.Structs.Size): void {
     const { width } = gameSize
     if (this.miniMapCamera) {
@@ -534,6 +617,12 @@ class Level1Scene extends Phaser.Scene {
       this.miniMapBorder.clear()
       this.miniMapBorder.lineStyle(2, 0x00ff00, 1)
       this.miniMapBorder.strokeRect(width - 200, 0, 200, 200)
+    }
+    if (this.countdownText) {
+      const countdownFontSize = Math.max(24, 32 * (width / 800)) // Scale font size
+      this.countdownText.setFontSize(`${countdownFontSize}px`)
+      this.countdownText.setStroke('#000000', 6 * (width / 800))
+      this.countdownText.setPosition(width / 2, 50 * (width / 800)) // Adjust Y position based on scale
     }
   }
 

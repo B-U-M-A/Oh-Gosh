@@ -25,6 +25,7 @@ export const SCENE_KEYS = {
   PAUSE: 'PauseScene',
   MAIN_MENU: 'MainMenuScene',
   CREDITS: 'CreditsScene',
+  WIN: 'WinScene',
 }
 
 export const LOCAL_STORAGE_KEYS = {
@@ -44,4 +45,9 @@ export const DIFFICULTY = {
   SPAWN_DECREASE_INTERVAL_SCORE: 15, // Score points (seconds survived) after which spawn delay decreases
 
   DIFFICULTY_UPDATE_INTERVAL_SCORE: 1, // How often (in score points) to check and update difficulty
+}
+
+// New: Win Condition
+export const WIN_CONDITION = {
+  TIME_TO_SURVIVE_MS: 40000, // Survive for 40 seconds to win
 }
