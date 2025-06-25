@@ -76,7 +76,7 @@ class Level1Scene extends Phaser.Scene {
         .setName('miniMap') // Zoom out to show more of the world
       this.miniMapCamera.setBackgroundColor(0x000000) // Black background for mini-map
       this.miniMapCamera.startFollow(this.player) // Mini-map also follows the player
-      this.miniMapCamera.setScroll(playerX - this.miniMapCamera.width / 2, playerY - this.miniMapCamera.height / 2)
+      // Removed: this.miniMapCamera.setScroll(playerX - this.miniMapCamera.width / 2, playerY - this.miniMapCamera.height / 2)
       this.miniMapCamera.setViewport(this.scale.width - 200, 0, 200, 200) // Ensure correct viewport after setting zoom
       this.miniMapCamera.setOrigin(0.5, 0.5) // Set origin to center for easier positioning
       this.miniMapCamera.setAlpha(0.7) // Add opacity to the minimap
@@ -395,10 +395,10 @@ class Level1Scene extends Phaser.Scene {
     const { width, height } = gameSize
     if (this.miniMapCamera) {
       this.miniMapCamera.setViewport(width - 200, 0, 200, 200)
-      this.miniMapCamera.setScroll(
-        this.player!.x - this.miniMapCamera.width / 2,
-        this.player!.y - this.miniMapCamera.height / 2,
-      )
+      // Removed: this.miniMapCamera.setScroll(
+      //   this.player!.x - this.miniMapCamera.width / 2,
+      //   this.player!.y - this.miniMapCamera.height / 2,
+      // )
     }
     if (this.miniMapBorder) {
       this.miniMapBorder.clear()
