@@ -119,6 +119,9 @@ class Level1Scene extends Phaser.Scene {
       () => {
         if (this.input.keyboard) {
           this.input.keyboard.enabled = true
+          // Re-add pause keyboard listeners when the scene resumes
+          this.input.keyboard.on('keydown-P', this.togglePause, this)
+          this.input.keyboard.on('keydown-ESC', this.togglePause, this)
         }
       },
       this,

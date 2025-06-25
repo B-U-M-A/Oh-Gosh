@@ -23,6 +23,67 @@ class PauseScene extends Phaser.Scene {
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
     // Initial layout
+    // Create all UI elements
+    this.backgroundRect = this.add.rectangle(0, 0, 1, 1, 0x000000, 0.7).setOrigin(0.5)
+    this.pausedText = this.add
+      .text(0, 0, 'PAUSED', {
+        fontFamily: 'Staatliches',
+        fontSize: '1px',
+        color: '#FFD700',
+        stroke: '#8A2BE2',
+        strokeThickness: 1,
+      })
+      .setOrigin(0.5)
+    this.resumeButton = this.add
+      .text(0, 0, 'Resume', { fontSize: '1px', color: '#00FFFF', backgroundColor: '#8A2BE2', padding: { x: 1, y: 1 } })
+      .setOrigin(0.5)
+      .setInteractive()
+      .on('pointerdown', this.resumeGame, this)
+      .on('pointerover', () => this.resumeButton?.setStyle({ color: '#FFD700' }))
+      .on('pointerout', () => this.resumeButton?.setStyle({ color: '#00FFFF' }))
+    this.volumeLabel = this.add.text(0, 0, 'Volume', { fontSize: '1px', color: '#FFFFFF' }).setOrigin(0.5)
+    this.volumeBar = this.add.graphics()
+    this.volumeHandle = this.add.rectangle(0, 0, 1, 1, 0xffffff).setInteractive({ draggable: true })
+    this.input.on('drag', (_: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
+      if (gameObject !== this.volumeHandle) return
+      const { width } = this.scale.gameSize
+      const baseWidth = 800
+      const scaleFactor = Math.min(width / baseWidth, this.scale.gameSize.height / 600)
+      const volumeBarWidth = 300 * scaleFactor
+      const barStartX = width / 2 - volumeBarWidth / 2
+      const barEndX = width / 2 + volumeBarWidth / 2
+      this.volumeHandle!.x = Phaser.Math.Clamp(dragX, barStartX, barEndX)
+      const volume = (this.volumeHandle!.x - barStartX) / volumeBarWidth
+      this.sound.volume = volume
+    })
+    this.toggleMinimapButton = this.add
+      .text(0, 0, 'Toggle Minimap: OFF', {
+        fontSize: '1px',
+        color: '#00FFFF',
+        backgroundColor: '#8A2BE2',
+        padding: { x: 1, y: 1 },
+      })
+      .setOrigin(0.5)
+      .setInteractive()
+      .on('pointerdown', () => {
+        const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
+        level1Scene.toggleMiniMap()
+        this.toggleMinimapButton?.setText(`Toggle Minimap: ${level1Scene.isMiniMapVisible ? 'ON' : 'OFF'}`)
+      })
+      .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
+      .on('pointerout', () => this.toggleMinimapButton?.setStyle({ color: '#00FFFF' }))
+    this.backToMenuButton = this.add
+      .text(0, 0, 'Back to Main Menu', {
+        fontSize: '1px',
+        color: '#00FFFF',
+        backgroundColor: '#8A2BE2',
+        padding: { x: 1, y: 1 },
+      })
+      .setOrigin(0.5)
+      .setInteractive()
+      .on('pointerdown', this.backToMainMenu, this)
+      .on('pointerover', () => this.backToMenuButton?.setStyle({ color: '#FFD700' }))
+      .on('pointerout', () => this.backToMenuButton?.setStyle({ color: '#00FFFF' }))
     this.handleResize(this.scale.gameSize)
 
     // --- Keyboard listener to resume the game ---
@@ -72,9 +133,8 @@ class PauseScene extends Phaser.Scene {
     // --- Create a semi-transparent background overlay ---
     if (!this.backgroundRect) {
       this.backgroundRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7).setOrigin(0.5)
-    } else {
-      this.backgroundRect.setSize(width, height).setPosition(width / 2, height / 2)
     }
+    this.backgroundRect.setSize(width, height).setPosition(width / 2, height / 2)
 
     // --- "Paused" Text ---
     const pausedFontSize = Math.max(48, 96 * scaleFactor)
@@ -88,11 +148,10 @@ class PauseScene extends Phaser.Scene {
           strokeThickness: 6 * scaleFactor,
         })
         .setOrigin(0.5)
-    } else {
-      this.pausedText.setFontSize(`${pausedFontSize}px`)
-      this.pausedText.setStroke('#8A2BE2', 6 * scaleFactor)
-      this.pausedText.setPosition(width / 2, height * 0.2)
     }
+    this.pausedText.setFontSize(`${pausedFontSize}px`)
+    this.pausedText.setStroke('#8A2BE2', 6 * scaleFactor)
+    this.pausedText.setPosition(width / 2, height * 0.2)
 
     // --- UI Elements Styling ---
     const buttonFontSize = Math.max(20, 28 * scaleFactor)
@@ -119,9 +178,8 @@ class PauseScene extends Phaser.Scene {
         .on('pointerdown', this.resumeGame, this)
         .on('pointerover', () => this.resumeButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.resumeButton?.setStyle({ color: '#00FFFF' }))
-    } else {
-      this.resumeButton.setPosition(width / 2, height * 0.4).setStyle(buttonStyle)
     }
+    this.resumeButton.setPosition(width / 2, height * 0.4).setStyle(buttonStyle)
 
     // --- Volume Control ---
     const volumeBarWidth = 300 * scaleFactor
@@ -130,16 +188,20 @@ class PauseScene extends Phaser.Scene {
 
     if (!this.volumeLabel) {
       this.volumeLabel = this.add.text(width / 2, volumeYPos - 30 * scaleFactor, 'Volume', labelStyle).setOrigin(0.5)
-    } else {
-      this.volumeLabel.setPosition(width / 2, volumeYPos - 30 * scaleFactor).setStyle(labelStyle)
     }
+    this.volumeLabel.setPosition(width / 2, volumeYPos - 30 * scaleFactor).setStyle(labelStyle)
 
     if (!this.volumeBar) {
       this.volumeBar = this.add.graphics()
     }
     this.volumeBar.clear()
     this.volumeBar.fillStyle(0x555555)
-    this.volumeBar.fillRect(width / 2 - volumeBarWidth / 2, volumeYPos - volumeBarHeight / 2, volumeBarWidth, volumeBarHeight)
+    this.volumeBar.fillRect(
+      width / 2 - volumeBarWidth / 2,
+      volumeYPos - volumeBarHeight / 2,
+      volumeBarWidth,
+      volumeBarHeight,
+    )
 
     const handleSize = 30 * scaleFactor
     const handleX = width / 2 - volumeBarWidth / 2 + this.sound.volume * volumeBarWidth
@@ -159,9 +221,8 @@ class PauseScene extends Phaser.Scene {
         const volume = (this.volumeHandle!.x - barStartX) / volumeBarWidth
         this.sound.volume = volume
       })
-    } else {
-      this.volumeHandle.setPosition(handleX, volumeYPos).setSize(handleSize, handleSize)
     }
+    this.volumeHandle.setPosition(handleX, volumeYPos).setSize(handleSize, handleSize)
 
     // --- Toggle Minimap Button ---
     const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
@@ -179,10 +240,9 @@ class PauseScene extends Phaser.Scene {
         })
         .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.toggleMinimapButton?.setStyle({ color: '#00FFFF' }))
-    } else {
-      this.toggleMinimapButton.setText(`Toggle Minimap: ${level1Scene.isMiniMapVisible ? 'ON' : 'OFF'}`)
-      this.toggleMinimapButton.setPosition(width / 2, minimapButtonYPos).setStyle(buttonStyle)
     }
+    this.toggleMinimapButton.setText(`Toggle Minimap: ${level1Scene.isMiniMapVisible ? 'ON' : 'OFF'}`)
+    this.toggleMinimapButton.setPosition(width / 2, minimapButtonYPos).setStyle(buttonStyle)
 
     // --- Back to Main Menu Button ---
     const backButtonYPos = height * 0.85
@@ -195,45 +255,48 @@ class PauseScene extends Phaser.Scene {
         .on('pointerdown', this.backToMainMenu, this)
         .on('pointerover', () => this.backToMenuButton?.setStyle({ color: '#FFD700' })) // Gold
         .on('pointerout', () => this.backToMenuButton?.setStyle({ color: '#00FFFF' }))
-    } else {
-      this.backToMenuButton.setPosition(width / 2, backButtonYPos).setStyle(buttonStyle)
     }
+    this.backToMenuButton.setPosition(width / 2, backButtonYPos).setStyle(buttonStyle)
   }
 
   private resumeGame(): void {
     // --- Clean up listeners to prevent multiple triggers ---
-    this.input.keyboard?.off('keydown-P', this.resumeGame, this);
-    this.input.keyboard?.off('keydown-ESC', this.resumeGame, this);
-    this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
-    this.input.off('drag'); // Clean up drag listener
+    this.input.keyboard?.off('keydown-P', this.resumeGame, this)
+    this.input.keyboard?.off('keydown-ESC', this.resumeGame, this)
+    this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+    this.input.off('drag') // Clean up drag listener
 
     // --- Get a reference to Level1Scene ---
-    const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene;
+    const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
 
     if (level1Scene) {
       // Temporarily disable keyboard input in Level1Scene
       // This prevents the 'P' or 'ESC' key, if still held down, from immediately re-pausing the game.
       if (level1Scene.input.keyboard) {
-        level1Scene.input.keyboard.enabled = false;
+        level1Scene.input.keyboard.enabled = false
       }
 
       // Resume the main game scene
-      this.scene.resume(SCENE_KEYS.LEVEL1);
+      this.scene.resume(SCENE_KEYS.LEVEL1)
 
       // Re-enable keyboard input in Level1Scene after a short delay (e.g., 200ms)
       // This gives the user time to release the pause key.
-      this.time.delayedCall(200, () => {
-        if (level1Scene.input.keyboard) {
-          level1Scene.input.keyboard.enabled = true;
-        }
-      }, [], this);
-
+      this.time.delayedCall(
+        200,
+        () => {
+          if (level1Scene.input.keyboard) {
+            level1Scene.input.keyboard.enabled = true
+          }
+        },
+        [],
+        this,
+      )
     } else {
-      console.error(`Level1 scene key not found: ${SCENE_KEYS.LEVEL1}. Cannot resume game.`);
+      console.error(`Level1 scene key not found: ${SCENE_KEYS.LEVEL1}. Cannot resume game.`)
     }
 
     // Stop this pause scene
-    this.scene.stop(SCENE_KEYS.PAUSE);
+    this.scene.stop(SCENE_KEYS.PAUSE)
   }
 
   private backToMainMenu(): void {
@@ -241,7 +304,7 @@ class PauseScene extends Phaser.Scene {
     this.input.keyboard?.off('keydown-P', this.resumeGame, this)
     this.input.keyboard?.off('keydown-ESC', this.resumeGame, this)
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
-    this.input.off('drag'); // Clean up drag listener
+    this.input.off('drag') // Clean up drag listener
 
     // Stop Level1Scene and PauseScene, then start MainMenuScene
     if (this.scene.manager.keys[SCENE_KEYS.LEVEL1]) {
