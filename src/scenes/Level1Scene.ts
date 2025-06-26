@@ -18,7 +18,7 @@ class Level1Scene extends Phaser.Scene {
   private miniMapCamera?: Phaser.Cameras.Scene2D.Camera
   private miniMapBorder?: Phaser.GameObjects.Graphics
   private isGameOver: boolean = false
-  public isMiniMapVisible: boolean = true
+  public isMiniMapVisible: boolean = false
 
   private tileGenerator?: TileGenerator
   private readonly TILE_SIZE = 64
@@ -37,6 +37,8 @@ class Level1Scene extends Phaser.Scene {
   // Win condition properties
   private winTimeRemaining: number
   private countdownText?: Phaser.GameObjects.Text
+  private progressBar?: Phaser.GameObjects.Graphics
+  private progressBarBackground?: Phaser.GameObjects.Graphics
 
   constructor() {
     super({ key: SCENE_KEYS.LEVEL1 })
@@ -52,7 +54,7 @@ class Level1Scene extends Phaser.Scene {
     }
     this.isGameOver = false // Reset the flag on scene creation
     this.score = 0 // Initialize score
-    this.startTime = this.time.now // Set start time for score calculation
+    this.startTime = this.time.startTime // Set start time for score calculation
     this.lastDifficultyUpdateScore = 0 // Reset difficulty tracking
     this.winTimeRemaining = WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000 // Reset win timer
 
@@ -98,19 +100,36 @@ class Level1Scene extends Phaser.Scene {
         .setScrollFactor(0) // Make the border fixed on the camera
         .lineStyle(2, 0x00ff00, 1) // Green border, 2 pixels thick
         .strokeRect(this.scale.width - 200, 0, 200, 200) // Draw border around minimap viewport
+      this.toggleMiniMap(this.isMiniMapVisible) // Set initial visibility based on the property
 
       // Add countdown text for win condition
       this.countdownText = this.add
-        .text(this.scale.width / 2, 50, `Survive: ${this.winTimeRemaining.toFixed(0)}s`, {
+        .text(10, 15, `Survive: ${this.winTimeRemaining.toFixed(0)}s`, {
           fontFamily: 'Staatliches',
-          fontSize: '32px',
-          color: '#ffffff',
-          stroke: '#000000',
-          strokeThickness: 6,
+          fontSize: '28px', // Adjusted for better fit inside bar
+          color: '#000000', // Black text for contrast
+          stroke: '#ffffff', // White stroke for contrast
+          strokeThickness: 4,
         })
-        .setOrigin(0.5)
+        .setOrigin(0, 0.5) // Left-aligned, vertically centered
         .setScrollFactor(0) // Fixed on camera
-        .setDepth(5)
+        .setDepth(100) // Highest depth
+
+      // Add progress bar background
+      this.progressBarBackground = this.add
+        .graphics()
+        .setScrollFactor(0)
+        .setDepth(98) // Below countdown text
+        .fillStyle(0x333333, 0.8) // Dark grey, semi-transparent
+        .fillRect(0, 0, this.scale.width, 50) // Full width, at the very top, thicker
+
+      // Add progress bar
+      this.progressBar = this.add
+        .graphics()
+        .setScrollFactor(0)
+        .setDepth(99) // Below countdown text, above background
+        .fillStyle(0x00ff00, 1) // Green, opaque
+        .fillRect(0, 0, this.scale.width, 50) // Initial full width, at the very top, thicker
 
       // Add resize event listener
       this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
@@ -153,6 +172,9 @@ class Level1Scene extends Phaser.Scene {
           this.input.keyboard.on('keydown-P', this.togglePause, this)
           this.input.keyboard.on('keydown-ESC', this.togglePause, this)
         }
+        // Resume timers
+        if (this.chaserSpawnTimer) this.chaserSpawnTimer.paused = false
+        if (this.winTimerEvent) this.winTimerEvent.paused = false
       },
       this,
     )
@@ -217,6 +239,8 @@ class Level1Scene extends Phaser.Scene {
       this.miniMapCamera = undefined
       this.miniMapBorder = undefined
       this.countdownText = undefined
+      this.progressBar = undefined
+      this.progressBarBackground = undefined
 
       // Remove blur event listener on shutdown
       this.sys.game.events.off('blur', this.handleGameBlur, this)
@@ -320,6 +344,10 @@ class Level1Scene extends Phaser.Scene {
         this.input.keyboard.enabled = false
       }
       this.scene.pause()
+
+      // Pause timers
+      if (this.chaserSpawnTimer) this.chaserSpawnTimer.paused = true
+      if (this.winTimerEvent) this.winTimerEvent.paused = true
 
       if (this.scene.manager.keys[SCENE_KEYS.PAUSE]) {
         this.scene.launch(SCENE_KEYS.PAUSE)
@@ -489,6 +517,7 @@ class Level1Scene extends Phaser.Scene {
     if (this.countdownText) {
       this.countdownText.setText(`Survive: ${Math.max(0, this.winTimeRemaining).toFixed(0)}s`)
     }
+    this.updateProgressBar()
 
     if (this.winTimeRemaining <= 0) {
       this.winGame()
@@ -619,12 +648,29 @@ class Level1Scene extends Phaser.Scene {
       this.miniMapBorder.clear()
       this.miniMapBorder.lineStyle(2, 0x00ff00, 1)
       this.miniMapBorder.strokeRect(width - 200, 0, 200, 200)
+      this.miniMapBorder.strokeRect(width - 200, 0, 200, 200)
     }
     if (this.countdownText) {
-      const countdownFontSize = Math.max(24, 32 * (width / 800)) // Scale font size
-      this.countdownText.setFontSize(`${countdownFontSize}px`)
-      this.countdownText.setStroke('#000000', 6 * (width / 800))
-      this.countdownText.setPosition(width / 2, 50 * (width / 800)) // Adjust Y position based on scale
+      this.countdownText.setPosition(10, 15) // Fixed position, left-aligned, top of scene
+    }
+    if (this.progressBarBackground) {
+      this.progressBarBackground.clear()
+      this.progressBarBackground.fillStyle(0x333333, 0.8)
+      this.progressBarBackground.fillRect(0, 0, width, 50) // Full width, thicker
+    }
+    if (this.progressBar) {
+      this.progressBar.clear()
+      this.updateProgressBar() // Recalculate and redraw progress bar
+    }
+  }
+
+  private updateProgressBar(): void {
+    if (this.progressBar) {
+      const progress = Math.max(0, this.winTimeRemaining / (WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000))
+      const barWidth = this.scale.width * progress
+      this.progressBar.clear()
+      this.progressBar.fillStyle(0x00ff00, 1)
+      this.progressBar.fillRect(0, 0, barWidth, 50) // Full width, thicker
     }
   }
 
