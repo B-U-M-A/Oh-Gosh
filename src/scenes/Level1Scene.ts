@@ -61,6 +61,9 @@ class Level1Scene extends Phaser.Scene {
   }
 
   create(): void {
+    // Play in-game music
+    this.sound.play(AUDIO_KEYS.IN_GAME_MUSIC, { loop: true, volume: 0.5 })
+
     // Listen for language changes to update UI text
     localizationManager.addChangeListener(() => this.updateText())
 
@@ -224,6 +227,9 @@ class Level1Scene extends Phaser.Scene {
 
     // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      // Stop in-game music
+      this.sound.stopByKey(AUDIO_KEYS.IN_GAME_MUSIC)
+
       // 1. Stop processing new input events
       this.input.keyboard?.off('keydown-P', this.togglePause, this)
       this.input.keyboard?.off('keydown-ESC', this.togglePause, this)

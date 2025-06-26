@@ -59,6 +59,14 @@ class PreloaderScene extends Phaser.Scene {
       console.error(`Security Error: Invalid asset path provided: ${collisionSoundPath}`)
       this.loadError = true
     }
+
+    const inGameMusicPath = 'public/music/in_game_music.wav'
+    if (isValidAssetPath(inGameMusicPath)) {
+      this.load.audio(AUDIO_KEYS.IN_GAME_MUSIC, inGameMusicPath)
+    } else {
+      console.error(`Security Error: Invalid asset path provided: ${inGameMusicPath}`)
+      this.loadError = true
+    }
   }
 
   create(): void {

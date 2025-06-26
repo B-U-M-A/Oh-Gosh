@@ -20,6 +20,7 @@ export const ANIMATION_KEYS = {
 
 export const AUDIO_KEYS = {
   COLLISION: 'collision_sound',
+  IN_GAME_MUSIC: 'in_game_music',
 }
 
 export const SCENE_KEYS = {
