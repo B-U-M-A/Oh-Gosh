@@ -215,7 +215,7 @@ class CreditsScene extends Phaser.Scene {
         .text(width / 2, height - 50 * scaleFactor, commonStrings.backButton, buttonStyle) // MODIFIED: Use commonStrings.backButton
         .setOrigin(0.5)
         .setInteractive()
-        .on('pointerdown', () => this.scene.start(SCENE_KEYS.MAIN_MENU)) // Transition back to main menu on click
+        .on('pointerdown', () => this.scene.switch(SCENE_KEYS.MAIN_MENU)) // MODIFIED: Use switch
         .on('pointerover', () => this.backButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.backButton?.setStyle({ color: '#00FFFF' }))
     } else {

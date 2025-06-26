@@ -223,8 +223,8 @@ class GameOverScene extends Phaser.Scene {
 
   private restartGame(): void {
     // MODIFIED: Explicitly remove pointerdown listener before disabling interactivity
-    this.restartButton?.off('pointerdown', this.restartGame, this)
-    this.restartButton?.disableInteractive()
+    // REMOVED: this.restartButton?.off('pointerdown', this.restartGame, this)
+    // REMOVED: this.restartButton?.disableInteractive()
 
     // Prevent multiple restart triggers from firing simultaneously
     this.input.keyboard?.off('keydown-ENTER', this.restartGame, this)
@@ -241,7 +241,7 @@ class GameOverScene extends Phaser.Scene {
     this.cameras.main.fadeOut(500, 0, 0, 0, (_: Phaser.Cameras.Scene2D.Camera, progress: number) => {
       if (progress === 1) {
         this.scene.stop(SCENE_KEYS.GAME_OVER) // Stop the current GameOverScene
-        this.scene.start(SCENE_KEYS.MAIN_MENU) // Go back to MainMenuScene
+        this.scene.switch(SCENE_KEYS.MAIN_MENU) // MODIFIED: Use scene.switch
       }
     })
   }

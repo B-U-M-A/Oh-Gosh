@@ -150,13 +150,18 @@ class LevelSelectorScene extends Phaser.Scene {
         const levelId = button.getData('levelId')
         const levelData = this.levels.find((l) => l.id === levelId)
         if (levelData) {
+          // When starting a level, we still use 'start' because the LevelScene
+          // will be an active game scene, and the LevelSelectorScene might
+          // need to remain in the scene manager (though not active) for later return.
+          // However, for a full-screen game, stopping the selector is also an option.
+          // For now, keep 'start' for level launch, as it's a different context.
           this.scene.start(levelId, levelData.config)
         }
       })
     })
 
     this.backButton?.on('pointerdown', () => {
-      this.scene.start(SCENE_KEYS.MAIN_MENU)
+      this.scene.switch(SCENE_KEYS.MAIN_MENU) // MODIFIED: Use switch
     })
   }
 

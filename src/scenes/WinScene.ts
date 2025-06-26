@@ -10,8 +10,10 @@ class WinScene extends Phaser.Scene {
   private score: number = 0
   private winText?: Phaser.GameObjects.Text
   private scoreText?: Phaser.GameObjects.Text
-  private restartButton?: Phaser.GameObjects.Text
+  private highScore: number = 0
+  private highScoreText?: Phaser.GameObjects.Text
   private playerSprite?: Phaser.GameObjects.Sprite
+  private restartButton?: Phaser.GameObjects.Text
 
   constructor() {
     super({ key: SCENE_KEYS.WIN })
@@ -213,14 +215,13 @@ class WinScene extends Phaser.Scene {
         padding: { x: 20 * scaleFactor, y: 10 * scaleFactor },
       })
       this.restartButton.setPosition(width / 2, height - 80 * scaleFactor)
-      this.restartButton.setText(winStrings.restartPrompt ?? 'Press to Restart')
     }
   }
 
   private restartGame(): void {
     // MODIFIED: Explicitly remove pointerdown listener before disabling interactivity
-    this.restartButton?.off('pointerdown', this.restartGame, this)
-    this.restartButton?.disableInteractive()
+    // REMOVED: this.restartButton?.off('pointerdown', this.restartGame, this)
+    // REMOVED: this.restartButton?.disableInteractive()
 
     // Prevent multiple restart triggers from firing simultaneously
     this.input.keyboard?.off('keydown-ENTER', this.restartGame, this)
@@ -239,7 +240,7 @@ class WinScene extends Phaser.Scene {
     this.cameras.main.fadeOut(500, 0, 0, 0, (_: Phaser.Cameras.Scene2D.Camera, progress: number) => {
       if (progress === 1) {
         this.scene.stop(SCENE_KEYS.WIN) // Stop the current WinScene
-        this.scene.start(SCENE_KEYS.MAIN_MENU) // Transition back to the main menu scene
+        this.scene.switch(SCENE_KEYS.MAIN_MENU) // MODIFIED: Use scene.switch
       }
     })
   }

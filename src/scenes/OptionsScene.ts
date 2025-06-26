@@ -325,20 +325,18 @@ class OptionsScene extends Phaser.Scene {
   private toggleMinimap(): void {
     const activeLevelScene = this.getActiveLevelScene()
     if (activeLevelScene) {
-      // MODIFIED: Explicitly remove pointerdown listener before disabling interactivity
-      this.toggleMinimapButton?.off('pointerdown', this.toggleMinimap, this)
-      this.toggleMinimapButton?.disableInteractive()
+      // REMOVED: Explicitly remove pointerdown listener before disabling interactivity
+      // REMOVED: this.toggleMinimapButton?.off('pointerdown', this.toggleMinimap, this)
+      // REMOVED: this.toggleMinimapButton?.disableInteractive()
 
       activeLevelScene.toggleMiniMap()
-      const commonStrings = localizationManager.getStrings().common
-      const minimapState = activeLevelScene.isMiniMapVisible
-        ? commonStrings.minimapState.on
-        : commonStrings.minimapState.off
-      this.toggleMinimapButton?.setText(`${commonStrings.toggleMinimap} ${minimapState}`)
+      // The updateText() call below will trigger handleResize(), which correctly
+      // updates the button's text and manages its interactivity state.
+      this.updateText()
 
-      // MODIFIED: Re-add pointerdown listener after re-enabling interactivity
-      this.toggleMinimapButton?.setInteractive(true)
-      this.toggleMinimapButton?.on('pointerdown', this.toggleMinimap, this)
+      // REMOVED: Re-add pointerdown listener after re-enabling interactivity
+      // REMOVED: this.toggleMinimapButton?.setInteractive(true)
+      // REMOVED: this.toggleMinimapButton?.on('pointerdown', this.toggleMinimap, this)
     } else {
       console.warn('No active LevelScene found. Cannot toggle minimap.')
     }
@@ -349,12 +347,11 @@ class OptionsScene extends Phaser.Scene {
    */
   private backToMainMenu(): void {
     // MODIFIED: Explicitly remove pointerdown listener before disabling interactivity
-    this.backButton?.off('pointerdown', this.backToMainMenu, this)
-    this.backButton?.disableInteractive()
+    // REMOVED: this.backButton?.off('pointerdown', this.backToMainMenu, this)
+    // REMOVED: this.backButton?.disableInteractive()
 
-    // MODIFIED: Removed delayedCall. The explicit listener removal should be sufficient.
-    this.scene.stop(SCENE_KEYS.OPTIONS)
-    this.scene.start(SCENE_KEYS.MAIN_MENU)
+    // MODIFIED: Use scene.switch to return to MainMenuScene
+    this.scene.switch(SCENE_KEYS.MAIN_MENU)
   }
 }
 

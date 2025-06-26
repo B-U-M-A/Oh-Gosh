@@ -172,6 +172,7 @@ class PauseScene extends Phaser.Scene {
     const baseWidth = 800
     const baseHeight = 600
     const scaleFactor = Math.min(width / baseWidth, height / baseHeight)
+
     const pauseStrings = localizationManager.getStrings().pause
     const commonStrings = localizationManager.getStrings().common
 
@@ -355,7 +356,7 @@ class PauseScene extends Phaser.Scene {
       console.error(`Parent Level scene not found during backToMainMenu. This PauseScene instance might be stale.`)
     }
     this.scene.stop(SCENE_KEYS.PAUSE)
-    this.scene.start(SCENE_KEYS.MAIN_MENU)
+    this.scene.switch(SCENE_KEYS.MAIN_MENU) // MODIFIED: Use scene.switch
   }
 }
 

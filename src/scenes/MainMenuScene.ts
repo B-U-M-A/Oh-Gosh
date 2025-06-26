@@ -221,7 +221,7 @@ class MainMenuScene extends Phaser.Scene {
       )
       .setOrigin(1, 0.5)
       .setInteractive()
-      .on('pointerdown', () => this.scene.start(SCENE_KEYS.CREDITS))
+      .on('pointerdown', () => this.scene.switch(SCENE_KEYS.CREDITS)) // MODIFIED: Use switch
       .on('pointerover', () => {
         this.updateSelectionVisuals()
       })
@@ -239,7 +239,7 @@ class MainMenuScene extends Phaser.Scene {
       )
       .setOrigin(1, 0.5)
       .setInteractive()
-      .on('pointerdown', () => this.scene.start(SCENE_KEYS.OPTIONS))
+      .on('pointerdown', () => this.scene.switch(SCENE_KEYS.OPTIONS)) // MODIFIED: Use switch
       .on('pointerover', () => {
         this.updateSelectionVisuals()
       })
