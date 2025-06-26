@@ -11,7 +11,8 @@ import {
 import { localizationManager } from '../localization/LocalizationManager'
 import { TileGenerator } from '../world/TileGenerator'
 import { EnemyFactory } from '../game/EnemyFactory'
-import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData' // Add this import
+import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData'
+import { DifficultyManager } from '../utils/DifficultyManager'
 
 /**
  * The main gameplay scene where the player interacts with the game world, enemies, and collects items.
@@ -48,10 +49,8 @@ class Level1Scene extends Phaser.Scene {
   private currentChunkX: number = 0 // Player's current chunk X coordinate
   private currentChunkY: number = 0 // Player's current chunk Y coordinate
 
-  // Difficulty scaling properties
-  private currentChaserSpeed: number // Current speed of chasing enemies
-  private currentSpawnDelay: number // Current delay between enemy spawns
-  private lastDifficultyUpdateScore: number = 0 // Score when difficulty was last updated
+  // Difficulty manager
+    private difficultyManager!: DifficultyManager;
 
   // Debug and distance constants
   private readonly DEBUG_DISTANCE = false // Toggles distance debug logging
@@ -65,8 +64,7 @@ class Level1Scene extends Phaser.Scene {
 
   constructor() {
     super({ key: SCENE_KEYS.LEVEL1 })
-    this.currentChaserSpeed = DIFFICULTY.INITIAL_CHASER_SPEED
-    this.currentSpawnDelay = DIFFICULTY.INITIAL_SPAWN_DELAY
+    this.difficultyManager = new DifficultyManager(this);
     this.winTimeRemaining = WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000 // Convert to seconds
   }
 
@@ -88,7 +86,6 @@ class Level1Scene extends Phaser.Scene {
     this.isGameOver = false // Reset the flag on scene creation
     this.score = 0 // Initialize score
     this.startTime = this.time.startTime // Set start time for score calculation
-    this.lastDifficultyUpdateScore = 0 // Reset difficulty tracking
     this.winTimeRemaining = WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000 // Reset win timer
 
     this.tileGenerator = new TileGenerator(this, this.TILE_SIZE)
@@ -226,12 +223,7 @@ class Level1Scene extends Phaser.Scene {
     this.physics.add.collider(this.player!, this.chasers, this.gameOver, undefined, this)
 
     // Chaser spawn timer
-    this.chaserSpawnTimer = this.time.addEvent({
-      delay: this.currentSpawnDelay,
-      callback: this.spawnChaser,
-      callbackScope: this,
-      loop: true,
-    })
+    this.chaserSpawnTimer = this.difficultyManager.createSpawnTimer(this.spawnChaser, this);
 
     // Win condition timer
     this.winTimerEvent = this.time.addEvent({
@@ -503,10 +495,9 @@ class Level1Scene extends Phaser.Scene {
     // Add the created chaser to the chasers group
     this.chasers.add(chaser)
 
-    // The chaser's speed is still dynamically controlled by difficulty scaling
-    // and applied here after creation.
+    // The chaser's speed is dynamically controlled by the DifficultyManager
     if (this.player) {
-      this.physics.moveToObject(chaser, this.player, this.currentChaserSpeed)
+      this.physics.moveToObject(chaser, this.player, this.difficultyManager.getChaserSpeed())
     }
   }
 
@@ -603,7 +594,7 @@ class Level1Scene extends Phaser.Scene {
         // Re-target chasers if they are not moving or if player moved significantly
         // This ensures they keep chasing even if their initial target was slightly off
         if (chaser.body && ((chaser.body.velocity.x === 0 && chaser.body.velocity.y === 0) || distance > 50)) {
-          this.physics.moveToObject(chaser, this.player, this.currentChaserSpeed)
+          this.physics.moveToObject(chaser, this.player, this.difficultyManager.getChaserSpeed())
         }
       }
       return true // Continue iteration
@@ -651,51 +642,16 @@ class Level1Scene extends Phaser.Scene {
       return
     }
 
-    // Only update difficulty if score has increased enough since last update
-    if (this.score - this.lastDifficultyUpdateScore < DIFFICULTY.DIFFICULTY_UPDATE_INTERVAL_SCORE) {
-      return
-    }
-    this.lastDifficultyUpdateScore = this.score
-
-    // Calculate new chaser speed
-    const newChaserSpeed = Math.min(
-      DIFFICULTY.INITIAL_CHASER_SPEED +
-        Math.floor(this.score / DIFFICULTY.SPEED_INCREASE_INTERVAL_SCORE) * DIFFICULTY.SPEED_INCREASE_AMOUNT,
-      DIFFICULTY.MAX_CHASER_SPEED,
-    )
-
-    // Calculate new spawn delay
-    const newSpawnDelay = Math.max(
-      DIFFICULTY.INITIAL_SPAWN_DELAY -
-        Math.floor(this.score / DIFFICULTY.SPAWN_DECREASE_INTERVAL_SCORE) * DIFFICULTY.SPAWN_DECREASE_AMOUNT,
-      DIFFICULTY.MIN_SPAWN_DELAY,
-    )
-
-    // Update chaser speed if it has changed
-    if (newChaserSpeed !== this.currentChaserSpeed) {
-      this.currentChaserSpeed = newChaserSpeed
-      // Update speed of existing chasers (re-target them with new speed)
-      this.chasers?.children.each((chaser) => {
-        if (chaser instanceof Phaser.Physics.Arcade.Sprite && this.player) {
-          this.physics.moveToObject(chaser, this.player, this.currentChaserSpeed)
-        }
-        return true // Continue iteration
-      })
-      console.log(`Difficulty: Chaser speed increased to ${this.currentChaserSpeed.toFixed(0)}`)
-    }
+    // Update difficulty using the DifficultyManager
+    const difficultyUpdated = this.difficultyManager.updateDifficulty(this.score);
 
     // Update spawn delay if it has changed and reset timer
-    if (newSpawnDelay !== this.currentSpawnDelay) {
-      this.currentSpawnDelay = newSpawnDelay
+    if (difficultyUpdated) {
       this.chaserSpawnTimer?.remove() // Remove old timer
-      this.chaserSpawnTimer = this.time.addEvent({
-        // Add new timer with updated delay
-        delay: this.currentSpawnDelay,
-        callback: this.spawnChaser,
-        callbackScope: this,
-        loop: true,
-      })
-      console.log(`Difficulty: Chaser spawn delay decreased to ${this.currentSpawnDelay.toFixed(0)}ms`)
+      this.chaserSpawnTimer = this.difficultyManager.createSpawnTimer(this.spawnChaser, this);
+
+      // Update speed of existing chasers
+      this.difficultyManager.updateChasersSpeed(this.chasers!, this.player!);
     }
   }
 
