@@ -20,14 +20,22 @@ class MainMenuScene extends Phaser.Scene {
   private buttons: Phaser.GameObjects.Text[] = []
   private selectedButtonIndex: number = 0
   private keyboardCursors?: Phaser.Types.Input.Keyboard.CursorKeys
-  private enterKey?: Phaser.Input.Keyboard.Key // Add this line
-  private updateTextBound: () => void // To store the bound function for listener removal
-  private lastUpDownTime: number = 0 // For keyboard debounce
-  private readonly KEY_DEBOUNCE_MS = 150 // Debounce time in milliseconds
+  private enterKey?: Phaser.Input.Keyboard.Key
+  private updateTextBound: () => void
+  private lastUpDownTime: number = 0
+  private readonly KEY_DEBOUNCE_MS = 150
+  private introMusic?: Phaser.Sound.BaseSound
 
   constructor() {
     super({ key: SCENE_KEYS.MAIN_MENU })
-    this.updateTextBound = this.updateText.bind(this) // Bind once for consistent reference
+    this.updateTextBound = this.updateText.bind(this)
+  }
+
+  /**
+   * Preloads assets required for the MainMenuScene.
+   */
+  preload(): void {
+    this.load.audio('intro_music', 'music/intro_music.wav')
   }
 
   /**
@@ -40,6 +48,10 @@ class MainMenuScene extends Phaser.Scene {
   create(): void {
     // Set black background for the menu
     this.cameras.main.setBackgroundColor('#000000')
+
+    // Play intro music
+    this.introMusic = this.sound.add('intro_music', { loop: true, volume: 0.5 })
+    this.introMusic.play()
 
     // Setup keyboard controls for menu navigation
     this.keyboardCursors = this.input.keyboard?.createCursorKeys()
@@ -136,7 +148,7 @@ class MainMenuScene extends Phaser.Scene {
         this.scale.width - buttonXOffset,
         firstButtonCenterY,
         localizationManager.getStrings().mainMenu.fastPlay,
-        baseButtonStyle
+        baseButtonStyle,
       )
       .setOrigin(1, 0.5)
       .setInteractive()
@@ -171,7 +183,7 @@ class MainMenuScene extends Phaser.Scene {
         this.scale.width - buttonXOffset,
         firstButtonCenterY + buttonSpacing * 2,
         localizationManager.getStrings().mainMenu.credits,
-        baseButtonStyle
+        baseButtonStyle,
       )
       .setOrigin(1, 0.5)
       .setInteractive()
@@ -189,7 +201,7 @@ class MainMenuScene extends Phaser.Scene {
         this.scale.width - buttonXOffset,
         firstButtonCenterY + buttonSpacing * 3,
         localizationManager.getStrings().mainMenu.options,
-        baseButtonStyle
+        baseButtonStyle,
       )
       .setOrigin(1, 0.5)
       .setInteractive()
@@ -228,7 +240,9 @@ class MainMenuScene extends Phaser.Scene {
       this.creditsButton = undefined
       this.optionsButton = undefined
       this.keyboardCursors = undefined
-      this.enterKey = undefined // Add this line
+      this.enterKey = undefined
+      this.introMusic?.stop()
+      this.introMusic = undefined
     })
   }
 
@@ -337,7 +351,7 @@ class MainMenuScene extends Phaser.Scene {
    * Handles keyboard input for menu navigation and selection.
    */
   private handleKeyboardInput(): void {
-    if (!this.keyboardCursors || !this.buttons.length || !this.enterKey) return // Update the guard to also check for this.enterKey
+    if (!this.keyboardCursors || !this.buttons.length || !this.enterKey) return
 
     const currentTime = this.time.now
 
@@ -356,7 +370,7 @@ class MainMenuScene extends Phaser.Scene {
 
     // Handle Enter/Space for activation (no debounce needed for JustDown)
     if (
-      Phaser.Input.Keyboard.JustDown(this.enterKey) || // Change this line
+      Phaser.Input.Keyboard.JustDown(this.enterKey) ||
       Phaser.Input.Keyboard.JustDown(this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE))
     ) {
       this.activateSelectedButton()
