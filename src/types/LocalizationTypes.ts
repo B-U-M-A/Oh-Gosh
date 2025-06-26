@@ -49,4 +49,13 @@ export interface LocalizationStrings {
     }
     backButton: string
   }
+  level1: {
+    survive: string
+    toggleMinimap: string
+    minimapState: {
+      on: string
+      off: string
+    }
+    backButton: string
+  }
 }

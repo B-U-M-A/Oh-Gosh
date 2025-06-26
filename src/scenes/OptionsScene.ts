@@ -22,7 +22,7 @@ class OptionsScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#000000')
 
     // Listen for language changes to update UI text
-    localizationManager.addChangeListener(this.updateText, this)
+    localizationManager.addChangeListener(() => this.updateText())
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
     this.handleResize(this.scale.gameSize) // Initial layout
@@ -30,8 +30,10 @@ class OptionsScene extends Phaser.Scene {
     // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
-      localizationManager.removeChangeListener(this.updateText, this)
-      this.input.off('drag') // Clean up drag listener for volume handle
+      localizationManager.removeChangeListener(() => this.updateText())
+      if (this.input) {
+        this.input.off('drag') // Clean up drag listener for volume handle
+      }
 
       // Nullify references to allow garbage collection
       this.titleText = undefined
@@ -54,13 +56,15 @@ class OptionsScene extends Phaser.Scene {
     const strings = localizationManager.getStrings().options
     this.titleText?.setText(strings.title)
     this.languageLabel?.setText(strings.language)
-    this.backButton?.setText(strings.backButton)
+    this.backButton?.setText(localizationManager.getStrings().level1.backButton)
     this.volumeLabel?.setText(strings.volume)
 
     // Update minimap button text based on current state and new language string
     const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
-    const minimapState = level1Scene?.isMiniMapVisible ? strings.minimapState.on : strings.minimapState.off
-    this.toggleMinimapButton?.setText(`${strings.toggleMinimap} ${minimapState}`)
+    const minimapState = level1Scene?.isMiniMapVisible
+      ? localizationManager.getStrings().level1.minimapState.on
+      : localizationManager.getStrings().level1.minimapState.off
+    this.toggleMinimapButton?.setText(`${localizationManager.getStrings().level1.toggleMinimap} ${minimapState}`)
 
     // Re-apply styles and positions to ensure padding/font size are correct after text change
     this.handleResize(this.scale.gameSize)
@@ -203,18 +207,25 @@ class OptionsScene extends Phaser.Scene {
 
     // --- Toggle Minimap Button ---
     const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
-    const minimapState = level1Scene?.isMiniMapVisible ? strings.minimapState.on : strings.minimapState.off
+    const minimapState = level1Scene?.isMiniMapVisible
+      ? localizationManager.getStrings().level1.minimapState.on
+      : localizationManager.getStrings().level1.minimapState.off
 
     if (!this.toggleMinimapButton) {
       this.toggleMinimapButton = this.add
-        .text(width / 2, currentY, `${strings.toggleMinimap} ${minimapState}`, buttonStyle)
+        .text(
+          width / 2,
+          currentY,
+          `${localizationManager.getStrings().level1.toggleMinimap} ${minimapState}`,
+          buttonStyle,
+        )
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', this.toggleMinimap, this)
         .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.toggleMinimapButton?.setStyle({ color: '#00FFFF' }))
     } else {
-      this.toggleMinimapButton.setText(`${strings.toggleMinimap} ${minimapState}`)
+      this.toggleMinimapButton.setText(`${localizationManager.getStrings().level1.toggleMinimap} ${minimapState}`)
       this.toggleMinimapButton.setPosition(width / 2, currentY).setStyle(buttonStyle)
     }
     currentY += 80 * scaleFactor
@@ -222,7 +233,7 @@ class OptionsScene extends Phaser.Scene {
     // --- Back to Main Menu Button ---
     if (!this.backButton) {
       this.backButton = this.add
-        .text(width / 2, height - 50 * scaleFactor, strings.backButton, buttonStyle)
+        .text(width / 2, height - 50 * scaleFactor, localizationManager.getStrings().level1.backButton, buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', this.backToMainMenu, this)
@@ -254,9 +265,10 @@ class OptionsScene extends Phaser.Scene {
     const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
     if (level1Scene) {
       level1Scene.toggleMiniMap()
-      const strings = localizationManager.getStrings().options
-      const minimapState = level1Scene.isMiniMapVisible ? strings.minimapState.on : strings.minimapState.off
-      this.toggleMinimapButton?.setText(`${strings.toggleMinimap} ${minimapState}`)
+      const minimapState = level1Scene.isMiniMapVisible
+        ? localizationManager.getStrings().level1.minimapState.on
+        : localizationManager.getStrings().level1.minimapState.off
+      this.toggleMinimapButton?.setText(`${localizationManager.getStrings().level1.toggleMinimap} ${minimapState}`)
     } else {
       console.warn('Level1Scene not found. Cannot toggle minimap.')
     }

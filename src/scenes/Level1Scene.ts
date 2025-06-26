@@ -8,6 +8,7 @@ import {
   WIN_CONDITION,
   PLAYER,
 } from '../utils/constants'
+import { localizationManager } from '../localization/LocalizationManager'
 import { TileGenerator } from '../world/TileGenerator'
 import { EnemyFactory } from '../game/EnemyFactory'
 import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData' // Add this import
@@ -115,8 +116,9 @@ class Level1Scene extends Phaser.Scene {
       this.toggleMiniMap(this.isMiniMapVisible) // Set initial visibility based on the property
 
       // Add countdown text for win condition
+      const level1Strings = localizationManager.getStrings().level1
       this.countdownText = this.add
-        .text(10, 15, `Survive: ${this.winTimeRemaining.toFixed(0)}s`, {
+        .text(10, 15, level1Strings.survive.replace('{time}', this.winTimeRemaining.toFixed(0)), {
           fontFamily: 'Staatliches',
           fontSize: '28px', // Adjusted for better fit inside bar
           color: '#000000', // Black text for contrast
@@ -553,7 +555,8 @@ class Level1Scene extends Phaser.Scene {
 
     this.winTimeRemaining--
     if (this.countdownText) {
-      this.countdownText.setText(`Survive: ${Math.max(0, this.winTimeRemaining).toFixed(0)}s`)
+      const level1Strings = localizationManager.getStrings().level1
+      this.countdownText.setText(level1Strings.survive.replace('{time}', Math.max(0, this.winTimeRemaining).toFixed(0)))
     }
     this.updateProgressBar()
 

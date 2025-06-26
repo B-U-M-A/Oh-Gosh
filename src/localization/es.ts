@@ -43,11 +43,14 @@ export default {
     title: 'OPCIONES',
     language: 'Idioma:',
     volume: 'Volumen:',
-    toggleMinimap: 'Alternar Minimapa:',
+  },
+  level1: {
+    survive: 'Sobrevive: {time}s',
+    toggleMinimap: 'Mostrar minimapa:',
     minimapState: {
-      on: 'ENCENDIDO',
-      off: 'APAGADO',
+      on: 'SI',
+      off: 'NO',
     },
-    backButton: 'Volver al Menú Principal',
+    backButton: 'Volver al menú principal',
   },
 }

@@ -43,6 +43,9 @@ export default {
     title: 'OPTIONS',
     language: 'Language:',
     volume: 'Volume:',
+  },
+  level1: {
+    survive: 'Survive: {time}s',
     toggleMinimap: 'Toggle Minimap:',
     minimapState: {
       on: 'ON',
