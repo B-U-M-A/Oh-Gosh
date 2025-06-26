@@ -39,6 +39,7 @@ export interface LocalizationStrings {
     yourScore: string
     highScore: string
     restartPrompt: string
+    assetLoadError: string
   }
   /** Strings used in the victory/win screen */
   win: {

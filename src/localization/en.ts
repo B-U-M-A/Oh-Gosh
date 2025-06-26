@@ -32,6 +32,7 @@ export default {
     yourScore: 'Your Score: {score}',
     highScore: 'High Score: {score}',
     restartPrompt: 'Click or Press Enter to Restart',
+    assetLoadError: 'Error: Failed to load game assets.',
   },
   win: {
     title: 'YOU WIN!',

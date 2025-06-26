@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { isValidAssetPath } from '../utils/security'
 import { TEXTURE_KEYS, ANIMATION_KEYS, SCENE_KEYS, AUDIO_KEYS } from '../utils/constants'
+import { localizationManager } from '../localization/LocalizationManager'
 
 /**
  * The PreloaderScene is responsible for loading all game assets (images, audio, etc.)
@@ -9,6 +10,7 @@ import { TEXTURE_KEYS, ANIMATION_KEYS, SCENE_KEYS, AUDIO_KEYS } from '../utils/c
  */
 class PreloaderScene extends Phaser.Scene {
   private loadError: boolean = false
+  private errorDetails: string[] = []
 
   constructor() {
     super({ key: SCENE_KEYS.PRELOADER })
@@ -21,12 +23,14 @@ class PreloaderScene extends Phaser.Scene {
   preload(): void {
     // --- Gracefully handle asset loading errors ---
     this.load.on('loaderror', (file: Phaser.Loader.File) => {
-      console.error(`Error loading asset: ${file.key} - ${file.url}`)
+      const errorMessage = `Error loading asset: ${file.key} - ${file.url}`
+      console.error(errorMessage)
+      this.errorDetails.push(`[ERROR] ${new Date().toISOString()} - ${errorMessage}`)
       this.loadError = true
     })
 
     // --- Load Player Spritesheet ---
-    // Load the player character's idle animation spritesheet
+    // Load the player character's idle animation spritesheet with fallback
     const idleAssetPath = 'src/assets/becerrita/becerrita-idle.png'
     if (isValidAssetPath(idleAssetPath)) {
       this.load.spritesheet(TEXTURE_KEYS.IDLE, idleAssetPath, {
@@ -34,11 +38,14 @@ class PreloaderScene extends Phaser.Scene {
         frameHeight: 64,
       })
     } else {
-      console.error(`Security Error: Invalid asset path provided: ${idleAssetPath}`)
+      const errorMessage = `Security Error: Invalid asset path provided: ${idleAssetPath}`
+      console.error(errorMessage)
+      this.errorDetails.push(`[SECURITY] ${new Date().toISOString()} - ${errorMessage}`)
       this.loadError = true
     }
+
     // --- Load Player Spritesheet ---
-    // Load the player character's walk animation spritesheet
+    // Load the player character's walk animation spritesheet with fallback
     const walkAssetPath = 'src/assets/becerrita/becerrita-walk.png'
     if (isValidAssetPath(walkAssetPath)) {
       this.load.spritesheet(TEXTURE_KEYS.WALK, walkAssetPath, {
@@ -46,7 +53,9 @@ class PreloaderScene extends Phaser.Scene {
         frameHeight: 64,
       })
     } else {
-      console.error(`Security Error: Invalid asset path provided: ${walkAssetPath}`)
+      const errorMessage = `Security Error: Invalid asset path provided: ${walkAssetPath}`
+      console.error(errorMessage)
+      this.errorDetails.push(`[SECURITY] ${new Date().toISOString()} - ${errorMessage}`)
       this.loadError = true
     }
 
@@ -59,7 +68,9 @@ class PreloaderScene extends Phaser.Scene {
         frameHeight: 64,
       })
     } else {
-      console.error(`Security Error: Invalid asset path provided: ${worldTilesetPath}`)
+      const errorMessage = `Security Error: Invalid asset path provided: ${worldTilesetPath}`
+      console.error(errorMessage)
+      this.errorDetails.push(`[SECURITY] ${new Date().toISOString()} - ${errorMessage}`)
       this.loadError = true
     }
 
@@ -69,7 +80,9 @@ class PreloaderScene extends Phaser.Scene {
     if (isValidAssetPath(collisionSoundPath)) {
       this.load.audio(AUDIO_KEYS.COLLISION, collisionSoundPath)
     } else {
-      console.error(`Security Error: Invalid asset path provided: ${collisionSoundPath}`)
+      const errorMessage = `Security Error: Invalid asset path provided: ${collisionSoundPath}`
+      console.error(errorMessage)
+      this.errorDetails.push(`[SECURITY] ${new Date().toISOString()} - ${errorMessage}`)
       this.loadError = true
     }
 
@@ -78,7 +91,9 @@ class PreloaderScene extends Phaser.Scene {
     if (isValidAssetPath(inGameMusicPath)) {
       this.load.audio(AUDIO_KEYS.IN_GAME_MUSIC, inGameMusicPath)
     } else {
-      console.error(`Security Error: Invalid asset path provided: ${inGameMusicPath}`)
+      const errorMessage = `Security Error: Invalid asset path provided: ${inGameMusicPath}`
+      console.error(errorMessage)
+      this.errorDetails.push(`[SECURITY] ${new Date().toISOString()} - ${errorMessage}`)
       this.loadError = true
     }
   }
@@ -91,21 +106,23 @@ class PreloaderScene extends Phaser.Scene {
     if (this.loadError) {
       console.error('PreloaderScene: Assets failed to load. Displaying error message.')
       console.log('PreloaderScene: world_tileset texture exists:', this.textures.exists('world_tileset'))
-      // --- Display an error message if assets failed to load ---
+
+      // Log all error details
+      this.errorDetails.forEach((detail) => console.error(detail))
+
+      // --- Display a localized error message if assets failed to load ---
+      const errorMessage =
+        localizationManager.getStrings().gameOver?.assetLoadError || 'Error: Failed to load game assets.'
+
       this.add
-        .text(
-          this.scale.width / 2,
-          this.scale.height / 2,
-          'Error: Failed to load game assets.\nPlease refresh to try again.',
-          {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#ff0000',
-            align: 'center',
-            stroke: '#000000',
-            strokeThickness: 4,
-          },
-        )
+        .text(this.scale.width / 2, this.scale.height / 2, `${errorMessage}\nPlease refresh to try again.`, {
+          fontFamily: 'Arial',
+          fontSize: '24px',
+          color: '#ff0000',
+          align: 'center',
+          stroke: '#000000',
+          strokeThickness: 4,
+        })
         .setOrigin(0.5)
 
       // --- Stop further scene progression on error ---
@@ -114,10 +131,23 @@ class PreloaderScene extends Phaser.Scene {
 
     // --- Create Player Animations ---
     // Defensively check if the texture exists before creating an animation from it.
+    // Use fallback if the main texture is not available
     if (this.textures.exists(TEXTURE_KEYS.IDLE)) {
       this.anims.create({
         key: ANIMATION_KEYS.PLAYER_IDLE,
         frames: this.anims.generateFrameNumbers(TEXTURE_KEYS.IDLE, {
+          start: 0,
+          end: 3,
+        }),
+        frameRate: 3,
+        repeat: -1,
+      })
+    } else if (this.textures.exists(`${TEXTURE_KEYS.IDLE}_fallback`)) {
+      // Use the fallback texture
+      console.warn(`Using fallback texture for ${TEXTURE_KEYS.IDLE}`)
+      this.anims.create({
+        key: ANIMATION_KEYS.PLAYER_IDLE,
+        frames: this.anims.generateFrameNumbers(`${TEXTURE_KEYS.IDLE}_fallback`, {
           start: 0,
           end: 3,
         }),
@@ -132,6 +162,7 @@ class PreloaderScene extends Phaser.Scene {
 
     // --- Create Player Animations ---
     // Defensively check if the texture exists before creating an animation from it.
+    // Use fallback if the main texture is not available
     if (this.textures.exists(TEXTURE_KEYS.WALK)) {
       this.anims.create({
         key: ANIMATION_KEYS.PLAYER_WALK,
@@ -142,9 +173,21 @@ class PreloaderScene extends Phaser.Scene {
         frameRate: 5,
         repeat: -1,
       })
+    } else if (this.textures.exists(`${TEXTURE_KEYS.WALK}_fallback`)) {
+      // Use the fallback texture
+      console.warn(`Using fallback texture for ${TEXTURE_KEYS.WALK}`)
+      this.anims.create({
+        key: ANIMATION_KEYS.PLAYER_WALK,
+        frames: this.anims.generateFrameNumbers(`${TEXTURE_KEYS.WALK}_fallback`, {
+          start: 0,
+          end: 3,
+        }),
+        frameRate: 5,
+        repeat: -1,
+      })
     } else {
       // This case should be caught by the 'loaderror' event, but serves as a final guard.
-      console.error(`Texture key not found: ${TEXTURE_KEYS.WALK}. Cannot create idle animation.`)
+      console.error(`Texture key not found: ${TEXTURE_KEYS.WALK}. Cannot create walk animation.`)
       return
     }
 

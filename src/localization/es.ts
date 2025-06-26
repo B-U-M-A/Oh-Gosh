@@ -32,6 +32,7 @@ export default {
     yourScore: 'Tu Puntuación: {score}',
     highScore: 'Puntuación Más Alta: {score}',
     restartPrompt: 'Haz clic o Presiona Enter para Reiniciar',
+    assetLoadError: 'Error: No se pudieron cargar los assets del juego.',
   },
   win: {
     title: '¡GANASTE!',
