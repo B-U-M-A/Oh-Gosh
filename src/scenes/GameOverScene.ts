@@ -19,8 +19,8 @@ class GameOverScene extends Phaser.Scene {
     super({ key: SCENE_KEYS.GAME_OVER })
   }
 
-  init(data: { score?: number }) {
-    this.score = data.score || 0
+  init(data?: { score?: number }) {
+    this.score = data?.score ?? 0
 
     // Retrieve high score from local storage
     const storedHighScore = localStorage.getItem(LOCAL_STORAGE_KEYS.HIGH_SCORE)

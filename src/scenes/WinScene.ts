@@ -17,8 +17,8 @@ class WinScene extends Phaser.Scene {
     super({ key: SCENE_KEYS.WIN })
   }
 
-  init(data: { score?: number }) {
-    this.score = data.score || 0
+  init(data?: { score?: number }) {
+    this.score = data?.score ?? 0
     if (!isFinite(this.score)) {
       console.error(`[WinScene:${this.scene.key}] Error in init: Invalid score value`, { score: this.score })
       this.score = 0
