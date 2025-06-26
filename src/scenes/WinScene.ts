@@ -19,6 +19,10 @@ class WinScene extends Phaser.Scene {
 
   init(data: { score?: number }) {
     this.score = data.score || 0
+    if (!isFinite(this.score)) {
+      console.error(`[WinScene:${this.scene.key}] Error in init: Invalid score value`, { score: this.score })
+      this.score = 0
+    }
   }
 
   /**
@@ -61,9 +65,14 @@ class WinScene extends Phaser.Scene {
    */
   private updateText(): void {
     const winStrings = localizationManager.getStrings().win
-    this.winText?.setText(winStrings.title)
-    this.scoreText?.setText(winStrings.timeSurvived.replace('{score}', this.score.toFixed(2)))
-    this.restartButton?.setText(winStrings.restartPrompt)
+    this.winText?.setText(winStrings.title ?? 'You Win!')
+    this.scoreText?.setText(
+      (winStrings.timeSurvived?.replace('{score}', this.score.toFixed(2)) ?? 'Score: {score}').replace(
+        '{score}',
+        this.score.toFixed(2),
+      ),
+    )
+    this.restartButton?.setText(winStrings.restartPrompt ?? 'Press to Restart')
   }
 
   private handleResize(gameSize: Phaser.Structs.Size): void {
@@ -100,7 +109,10 @@ class WinScene extends Phaser.Scene {
         gradient.addColorStop(1, '#00aa00')
         this.winText.setFill(gradient)
       } catch (e) {
-        console.warn('Failed to create text gradient. Using solid color.', e)
+        console.warn(
+          `[WinScene:${this.scene.key}] Error in handleResize: Failed to create text gradient. Using solid color.`,
+          e,
+        )
       }
     } else {
       this.winText.setFontSize(`${winFontSize}px`)
@@ -113,7 +125,10 @@ class WinScene extends Phaser.Scene {
         gradient.addColorStop(1, '#00aa00')
         this.winText.setFill(gradient)
       } catch (e) {
-        console.warn('Failed to create text gradient. Using solid color.', e)
+        console.warn(
+          `[WinScene:${this.scene.key}] Error in handleResize: Failed to create text gradient. Using solid color.`,
+          e,
+        )
       }
       this.winText.setText(winStrings.title)
     }
@@ -122,19 +137,32 @@ class WinScene extends Phaser.Scene {
     const scoreFontSize = Math.max(32, 64 * scaleFactor)
     if (!this.scoreText) {
       this.scoreText = this.add
-        .text(width / 2, 250 * scaleFactor, winStrings.timeSurvived.replace('{score}', this.score.toFixed(2)), {
-          fontFamily: 'Staatliches',
-          fontSize: `${scoreFontSize}px`,
-          color: '#ffffff',
-          stroke: '#000000',
-          strokeThickness: 6 * scaleFactor,
-        })
+        .text(
+          width / 2,
+          250 * scaleFactor,
+          (winStrings.timeSurvived?.replace('{score}', this.score.toFixed(2)) ?? 'Score: {score}').replace(
+            '{score}',
+            this.score.toFixed(2),
+          ),
+          {
+            fontFamily: 'Staatliches',
+            fontSize: `${scoreFontSize}px`,
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 6 * scaleFactor,
+          },
+        )
         .setOrigin(0.5)
     } else {
       this.scoreText.setFontSize(`${scoreFontSize}px`)
       this.scoreText.setStroke('#000000', 6 * scaleFactor)
       this.scoreText.setPosition(width / 2, 250 * scaleFactor)
-      this.scoreText.setText(winStrings.timeSurvived.replace('{score}', this.score.toFixed(2))) // Ensure text is updated on resize
+      this.scoreText.setText(
+        (winStrings.timeSurvived?.replace('{score}', this.score.toFixed(2)) ?? 'Score: {score}').replace(
+          '{score}',
+          this.score.toFixed(2),
+        ),
+      ) // Ensure text is updated on resize
     }
 
     // Add player sprite with idle animation in the center
@@ -146,10 +174,15 @@ class WinScene extends Phaser.Scene {
         if (this.anims.exists(ANIMATION_KEYS.PLAYER_IDLE)) {
           this.playerSprite.play(ANIMATION_KEYS.PLAYER_IDLE)
         } else {
-          console.warn(`Animation not found: ${ANIMATION_KEYS.PLAYER_IDLE}. Displaying static sprite.`)
+          console.warn(
+            `[WinScene:${this.scene.key}] Warning in handleResize: Animation not found: ${ANIMATION_KEYS.PLAYER_IDLE}. Displaying static sprite.`,
+          )
         }
       } catch (error) {
-        console.error('Failed to create player sprite on win screen:', error)
+        console.error(
+          `[WinScene:${this.scene.key}] Error in createPlayerSprite: Failed to create player sprite (texture: ${TEXTURE_KEYS.IDLE})`,
+          error,
+        )
       }
     } else {
       this.playerSprite.setScale(playerScale)
@@ -160,7 +193,7 @@ class WinScene extends Phaser.Scene {
     const restartFontSize = Math.max(28, 48 * scaleFactor)
     if (!this.restartButton) {
       this.restartButton = this.add
-        .text(width / 2, height - 80 * scaleFactor, winStrings.restartPrompt, {
+        .text(width / 2, height - 80 * scaleFactor, winStrings.restartPrompt ?? 'Press to Restart', {
           fontFamily: 'Staatliches',
           fontSize: `${restartFontSize}px`,
           color: '#00FFFF', // Cyan
@@ -184,6 +217,7 @@ class WinScene extends Phaser.Scene {
         padding: { x: 20 * scaleFactor, y: 10 * scaleFactor },
       })
       this.restartButton.setPosition(width / 2, height - 80 * scaleFactor)
+      this.restartButton.setText(winStrings.restartPrompt ?? 'Press to Restart')
     }
   }
 
@@ -195,7 +229,9 @@ class WinScene extends Phaser.Scene {
 
     // --- Robustly check if the target scene exists before trying to start it ---
     if (!this.scene.manager.keys[SCENE_KEYS.MAIN_MENU]) {
-      console.error(`Scene key not found: ${SCENE_KEYS.MAIN_MENU}. Cannot restart game.`)
+      console.error(
+        `[WinScene:${this.scene.key}] Error in restartGame: Scene key not found: ${SCENE_KEYS.MAIN_MENU}. Cannot restart game.`,
+      )
       return
     }
 
