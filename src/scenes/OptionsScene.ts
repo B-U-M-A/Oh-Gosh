@@ -14,22 +14,37 @@ import { LevelScene } from './LevelScene'
  * Provides UI controls for these settings and handles their persistence.
  */
 class OptionsScene extends Phaser.Scene {
-  private titleText?: Phaser.GameObjects.Text
-  private languageLabel?: Phaser.GameObjects.Text
-  private englishButton?: Phaser.GameObjects.Text
-  private spanishButton?: Phaser.GameObjects.Text
-  private volumeLabel?: Phaser.GameObjects.Text
-  private volumeBar?: Phaser.GameObjects.Graphics
-  private volumeHandle?: Phaser.GameObjects.Rectangle
-  private toggleMinimapButton?: Phaser.GameObjects.Text
-  private backButton?: Phaser.GameObjects.Text
-  private portugueseButton?: Phaser.GameObjects.Text
+  private titleText!: Phaser.GameObjects.Text
+  private languageLabel!: Phaser.GameObjects.Text
+  private englishButton!: Phaser.GameObjects.Text
+  private spanishButton!: Phaser.GameObjects.Text
+  private portugueseButton!: Phaser.GameObjects.Text
+  private volumeLabel!: Phaser.GameObjects.Text
+  private volumeBar!: Phaser.GameObjects.Graphics
+  private volumeHandle!: Phaser.GameObjects.Rectangle
+  private toggleMinimapButton!: Phaser.GameObjects.Text
+  private backButton!: Phaser.GameObjects.Text
+
+  private boundCallbacks: {
+    setEnglish: () => void
+    setSpanish: () => void
+    setPortuguese: () => void
+    toggleMinimap: () => void
+    backToMainMenu: () => void
+  }
 
   private localizationUpdateCallback: () => void
 
   constructor() {
     super({ key: SCENE_KEYS.OPTIONS })
     this.localizationUpdateCallback = () => this.updateText()
+    this.boundCallbacks = {
+      setEnglish: () => this.setLanguage('en'),
+      setSpanish: () => this.setLanguage('es'),
+      setPortuguese: () => this.setLanguage('pt'),
+      toggleMinimap: this.toggleMinimap.bind(this),
+      backToMainMenu: this.backToMainMenu.bind(this),
+    }
   }
 
   /**
@@ -45,9 +60,23 @@ class OptionsScene extends Phaser.Scene {
    * - Window resizing
    * - Input controls
    */
-  create(): void {
+  private onWake(): void {
+    // Reset input state
+    if (this.input.keyboard) {
+      this.input.keyboard.enabled = true
+    }
+
     // Set black background for the options screen
     this.cameras.main.setBackgroundColor('#000000')
+
+    // Clear existing UI elements if any
+    this.clearUIElements()
+
+    // Initialize all UI elements
+    this.createUIElements()
+
+    // Set initial text values
+    this.updateText()
 
     // Listen for language changes to update UI text
     localizationManager.addChangeListener(this.localizationUpdateCallback)
@@ -55,14 +84,69 @@ class OptionsScene extends Phaser.Scene {
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
     this.handleResize(this.scale.gameSize) // Initial layout
 
+    // Make sure scene is visible
+    this.scene.setVisible(true)
+
+    // Set up volume drag handler
+    const onDrag = (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
+      if (gameObject === this.volumeHandle) {
+        const { width } = this.scale.gameSize
+        const volumeBarWidth = 300 * Math.min(width / 800, this.scale.gameSize.height / 600)
+        const barStartX = width / 2 - volumeBarWidth / 2
+        const barEndX = width / 2 + volumeBarWidth / 2
+        this.volumeHandle.x = Phaser.Math.Clamp(dragX, barStartX, barEndX)
+        this.sound.volume = (this.volumeHandle.x - barStartX) / volumeBarWidth
+      }
+    }
+
+    this.input.off('drag') // Clear any existing drag handlers
+    this.input.on('drag', onDrag)
+
+    // Store drag handler for cleanup
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off('drag', onDrag)
+    })
+  }
+
+  create(): void {
+    this.onWake()
+
+    // Listen for wake events to reinitialize the scene
+    this.events.on(Phaser.Scenes.Events.WAKE, this.onWake, this)
+
     // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      // Remove all listeners first
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
       localizationManager.removeChangeListener(this.localizationUpdateCallback)
+      this.events.off(Phaser.Scenes.Events.WAKE, this.onWake, this)
+
+      // Clean up input
       if (this.input) {
-        this.input.off('drag') // Clean up drag listener for volume handle
+        this.input.off('drag')
       }
-      // No manual nullification of GameObjects here. Let Phaser handle it.
+
+      // Explicitly destroy all GameObjects
+      this.titleText?.destroy()
+      this.englishButton?.destroy()
+      this.spanishButton?.destroy()
+      this.portugueseButton?.destroy()
+      this.volumeLabel?.destroy()
+      this.volumeBar?.destroy()
+      this.volumeHandle?.destroy()
+      this.toggleMinimapButton?.destroy()
+      this.backButton?.destroy()
+
+      // Nullify references
+      this.titleText = null!
+      this.englishButton = null!
+      this.spanishButton = null!
+      this.portugueseButton = null!
+      this.volumeLabel = null!
+      this.volumeBar = null!
+      this.volumeHandle = null!
+      this.toggleMinimapButton = null!
+      this.backButton = null!
     })
   }
 
@@ -170,39 +254,54 @@ class OptionsScene extends Phaser.Scene {
 
     // English Button
     if (!this.englishButton) {
+      const setEnglishBound = () => this.setLanguage('en')
       this.englishButton = this.add
         .text(width / 2 - langButtonWidth - langButtonSpacing, currentY, 'English', buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
-        .on('pointerdown', () => this.setLanguage('en'))
+        .on('pointerdown', setEnglishBound)
         .on('pointerover', () => this.englishButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.englishButton?.setStyle({ color: '#00FFFF' }))
+
+      this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.englishButton?.off('pointerdown', setEnglishBound)
+      })
     } else {
       this.englishButton.setPosition(width / 2 - langButtonWidth - langButtonSpacing, currentY).setStyle(buttonStyle)
     }
 
     // Spanish Button
     if (!this.spanishButton) {
+      const setSpanishBound = () => this.setLanguage('es')
       this.spanishButton = this.add
         .text(width / 2, currentY, 'Español', buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
-        .on('pointerdown', () => this.setLanguage('es'))
+        .on('pointerdown', setSpanishBound)
         .on('pointerover', () => this.spanishButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.spanishButton?.setStyle({ color: '#00FFFF' }))
+
+      this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.spanishButton?.off('pointerdown', setSpanishBound)
+      })
     } else {
       this.spanishButton.setPosition(width / 2, currentY).setStyle(buttonStyle)
     }
 
     // Portuguese Button
     if (!this.portugueseButton) {
+      const setPortugueseBound = () => this.setLanguage('pt')
       this.portugueseButton = this.add
         .text(width / 2 + langButtonWidth + langButtonSpacing, currentY, 'Português', buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
-        .on('pointerdown', () => this.setLanguage('pt'))
+        .on('pointerdown', setPortugueseBound)
         .on('pointerover', () => this.portugueseButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.portugueseButton?.setStyle({ color: '#00FFFF' }))
+
+      this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.portugueseButton?.off('pointerdown', setPortugueseBound)
+      })
     } else {
       this.portugueseButton.setPosition(width / 2 + langButtonWidth + langButtonSpacing, currentY).setStyle(buttonStyle)
     }
@@ -240,17 +339,23 @@ class OptionsScene extends Phaser.Scene {
     if (!this.volumeHandle) {
       this.volumeHandle = this.add
         .rectangle(handleX, volumeYPos, handleSize, handleSize, 0xffffff)
-        .setInteractive({ draggable: true })
+        .setInteractive({ draggable: true, useHandCursor: true })
 
-      this.input.on('drag', (_: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
-        if (gameObject !== this.volumeHandle) return
+      const onDrag = (_: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
+        if (!this.volumeHandle || gameObject !== this.volumeHandle) return
 
         const barStartX = width / 2 - volumeBarWidth / 2
         const barEndX = width / 2 + volumeBarWidth / 2
-        this.volumeHandle!.x = Phaser.Math.Clamp(dragX, barStartX, barEndX)
+        this.volumeHandle.x = Phaser.Math.Clamp(dragX, barStartX, barEndX)
 
-        const volume = (this.volumeHandle!.x - barStartX) / volumeBarWidth
+        const volume = (this.volumeHandle.x - barStartX) / volumeBarWidth
         this.sound.volume = volume
+      }
+
+      this.input.on('drag', onDrag)
+
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.input.off('drag', onDrag)
       })
     } else {
       this.volumeHandle.setPosition(handleX, volumeYPos).setSize(handleSize, handleSize)
@@ -267,11 +372,18 @@ class OptionsScene extends Phaser.Scene {
       const initialText = activeLevelScene
         ? `${commonStrings.toggleMinimap} ${minimapState}`
         : `${commonStrings.toggleMinimap} N/A`
+      this.toggleMinimapButton = this.add.text(width / 2, currentY, initialText, buttonStyle).setOrigin(0.5)
+      const toggleMinimapBound = this.toggleMinimap.bind(this)
       this.toggleMinimapButton = this.add
         .text(width / 2, currentY, initialText, buttonStyle)
         .setOrigin(0.5)
-        .setInteractive(!!activeLevelScene)
-        .on('pointerdown', this.toggleMinimap, this)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', toggleMinimapBound)
+
+      this.events
+        .once(Phaser.Scenes.Events.SHUTDOWN, () => {
+          this.toggleMinimapButton?.off('pointerdown', toggleMinimapBound)
+        })
         .on('pointerover', () => {
           if (this.toggleMinimapButton?.input?.enabled) {
             this.toggleMinimapButton?.setStyle({ color: '#FFD700' })
@@ -293,13 +405,18 @@ class OptionsScene extends Phaser.Scene {
 
     // --- Back to Main Menu Button ---
     if (!this.backButton) {
+      const backToMainMenuBound = this.backToMainMenu.bind(this)
       this.backButton = this.add
         .text(width / 2, height - 50 * scaleFactor, commonStrings.backButton, buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
-        .on('pointerdown', this.backToMainMenu, this)
+        .on('pointerdown', backToMainMenuBound)
         .on('pointerover', () => this.backButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.backButton?.setStyle({ color: '#00FFFF' }))
+
+      this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.backButton?.off('pointerdown', backToMainMenuBound)
+      })
     } else {
       this.backButton.setPosition(width / 2, height - 50 * scaleFactor).setStyle(buttonStyle)
       this.backButton.setText(commonStrings.backButton)
@@ -345,13 +462,151 @@ class OptionsScene extends Phaser.Scene {
   /**
    * Stops the current scene and returns to the MainMenuScene.
    */
-  private backToMainMenu(): void {
-    // MODIFIED: Explicitly remove pointerdown listener before disabling interactivity
-    // REMOVED: this.backButton?.off('pointerdown', this.backToMainMenu, this)
-    // REMOVED: this.backButton?.disableInteractive()
+  private clearUIElements(): void {
+    // Remove all existing interactive elements
+    this.englishButton?.removeInteractive()
+    this.spanishButton?.removeInteractive()
+    this.portugueseButton?.removeInteractive()
+    this.volumeHandle?.removeInteractive()
+    this.toggleMinimapButton?.removeInteractive()
+    this.backButton?.removeInteractive()
 
-    // MODIFIED: Use scene.switch to return to MainMenuScene
-    this.scene.switch(SCENE_KEYS.MAIN_MENU)
+    // Remove all event listeners
+    this.englishButton?.off('pointerdown')
+    this.spanishButton?.off('pointerdown')
+    this.portugueseButton?.off('pointerdown')
+    this.toggleMinimapButton?.off('pointerdown')
+    this.backButton?.off('pointerdown')
+  }
+
+  private createUIElements(): void {
+    const { width, height } = this.scale.gameSize
+    const baseWidth = 800
+    const baseHeight = 600
+    const scaleFactor = Math.min(width / baseWidth, height / baseHeight)
+
+    // Create all UI elements upfront with default positions
+    const buttonStyle = {
+      fontSize: `${Math.max(20, 28 * scaleFactor)}px`,
+      color: '#00FFFF',
+      backgroundColor: '#8A2BE2',
+      padding: { x: 20 * scaleFactor, y: 10 * scaleFactor },
+    }
+
+    // Title
+    this.titleText = this.add
+      .text(width / 2, height * 0.15, '', {
+        fontFamily: 'Staatliches',
+        fontSize: `${Math.max(48, 96 * scaleFactor)}px`,
+        color: '#FFD700',
+        stroke: '#8A2BE2',
+        strokeThickness: 6 * scaleFactor,
+      })
+      .setOrigin(0.5)
+
+    // Language selection
+    this.languageLabel = this.add
+      .text(width / 2, height * 0.3, '', {
+        fontSize: `${Math.max(18, 24 * scaleFactor)}px`,
+        color: '#FFFFFF',
+      })
+      .setOrigin(0.5)
+
+    const langButtonWidth = 120 * scaleFactor
+    const langButtonSpacing = 20 * scaleFactor
+    const langY = height * 0.35
+
+    // Create buttons with full interactivity setup
+    this.englishButton = this.add
+      .text(width / 2 - langButtonWidth - langButtonSpacing, langY, 'English', buttonStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', this.boundCallbacks.setEnglish)
+      .on('pointerover', () => this.englishButton?.setStyle({ color: '#FFD700' }))
+      .on('pointerout', () => this.englishButton?.setStyle({ color: '#00FFFF' }))
+
+    this.spanishButton = this.add
+      .text(width / 2, langY, 'Español', buttonStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', this.boundCallbacks.setSpanish)
+      .on('pointerover', () => this.spanishButton?.setStyle({ color: '#FFD700' }))
+      .on('pointerout', () => this.spanishButton?.setStyle({ color: '#00FFFF' }))
+
+    this.portugueseButton = this.add
+      .text(width / 2 + langButtonWidth + langButtonSpacing, langY, 'Português', buttonStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', this.boundCallbacks.setPortuguese)
+      .on('pointerover', () => this.portugueseButton?.setStyle({ color: '#FFD700' }))
+      .on('pointerout', () => this.portugueseButton?.setStyle({ color: '#00FFFF' }))
+
+    // Volume control
+    this.volumeLabel = this.add
+      .text(width / 2, height * 0.45, '', {
+        fontSize: `${Math.max(18, 24 * scaleFactor)}px`,
+        color: '#FFFFFF',
+      })
+      .setOrigin(0.5)
+
+    this.volumeBar = this.add.graphics()
+    this.volumeHandle = this.add
+      .rectangle(width / 2, height * 0.5, 30 * scaleFactor, 30 * scaleFactor, 0xffffff)
+      .setInteractive({ draggable: true, useHandCursor: true })
+
+    // Minimap toggle
+    this.toggleMinimapButton = this.add
+      .text(width / 2, height * 0.6, '', buttonStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', this.boundCallbacks.toggleMinimap)
+      .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
+      .on('pointerout', () => this.toggleMinimapButton?.setStyle({ color: '#00FFFF' }))
+
+    // Back button
+    this.backButton = this.add
+      .text(width / 2, height - 50 * scaleFactor, '', buttonStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', this.boundCallbacks.backToMainMenu)
+      .on('pointerover', () => this.backButton?.setStyle({ color: '#FFD700' }))
+      .on('pointerout', () => this.backButton?.setStyle({ color: '#00FFFF' }))
+  }
+
+  private updateUI(): void {
+    const { width, height } = this.scale.gameSize
+    const baseWidth = 800
+    const baseHeight = 600
+    const scaleFactor = Math.min(width / baseWidth, height / baseHeight)
+
+    // Update positions and styles of existing elements
+    this.titleText
+      .setPosition(width / 2, height * 0.15)
+      .setFontSize(`${Math.max(48, 96 * scaleFactor)}px`)
+      .setStroke('#8A2BE2', 6 * scaleFactor)
+
+    // Update all other UI elements similarly...
+  }
+
+  private backToMainMenu(): void {
+    // Clean up our own interactive elements
+    this.englishButton.removeInteractive()
+    this.spanishButton.removeInteractive()
+    this.portugueseButton.removeInteractive()
+    this.volumeHandle.removeInteractive()
+    this.toggleMinimapButton.removeInteractive()
+    this.backButton.removeInteractive()
+
+    // Remove our own input listeners
+    this.input.off('drag')
+
+    // Resume and bring MainMenu to front
+    this.scene.resume(SCENE_KEYS.MAIN_MENU)
+    this.scene.bringToTop(SCENE_KEYS.MAIN_MENU)
+
+    // Set visibility before stopping
+    this.scene.setVisible(false)
+    this.scene.stop()
   }
 }
 
