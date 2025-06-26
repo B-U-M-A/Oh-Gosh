@@ -29,25 +29,31 @@ export class TileGenerator {
     // Create a new tilemap using the scene's tilemap factory
     const map = this.scene.make.tilemap({ data: tileMapData, tileWidth: this.tileSize, tileHeight: this.tileSize })
     // Add the tileset image to the map using the default tileset name
+    // The second 'world_tileset' refers to the key used when loading the image in PreloaderScene.
     map.addTilesetImage('world_tileset', 'world_tileset', this.tileSize, this.tileSize, 0, 0)
     return map
   }
 
   /**
-   * Creates a tilemap layer from the given tilemap
-   * @param map - The tilemap to create the layer from
-   * @param layerName - Name of the layer (used for error messages)
-   * @param tilesetName - Name of the tileset to use for the layer
-   * @returns The created Phaser.Tilemaps.TilemapLayer
-   * @throws Error if the layer creation fails
+   * Creates a tilemap layer from the given tilemap.
+   * @param map - The tilemap to create the layer from.
+   * @param layerName - Name of the layer (used for error messages).
+   * @param tilesetName - Name of the tileset to use for the layer.
+   * @param x - The X position (in world coordinates) where the layer will be drawn.
+   * @param y - The Y position (in world coordinates) where the layer will be drawn.
+   * @returns The created Phaser.Tilemaps.TilemapLayer.
+   * @throws Error if the layer creation fails.
    */
   public createLayer(
     map: Phaser.Tilemaps.Tilemap,
     layerName: string,
     tilesetName: string,
+    x: number, // MODIFIED: Added x parameter
+    y: number, // MODIFIED: Added y parameter
   ): Phaser.Tilemaps.TilemapLayer {
     // Create a new layer at index 0 with the specified tileset
-    const layer = map.createLayer(0, tilesetName, 0, 0)
+    // MODIFIED: Use the passed x and y coordinates
+    const layer = map.createLayer(0, tilesetName, x, y)
     // Throw an error if layer creation fails
     if (!layer) {
       throw new Error(`Failed to create tilemap layer: ${layerName}`)

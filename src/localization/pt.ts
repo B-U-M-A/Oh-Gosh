@@ -1,4 +1,14 @@
+// src/localization/pt.ts
+
 export default {
+  common: {
+    backButton: 'Voltar ao Menu Principal',
+    toggleMinimap: 'Minimapa:',
+    minimapState: {
+      on: 'LIGADO',
+      off: 'DESLIGADO',
+    },
+  },
   mainMenu: {
     title: 'Oh-Gosh',
     fastPlay: 'Jogo Rápido',
@@ -10,11 +20,6 @@ export default {
     title: 'PAUSADO',
     resume: 'Continuar',
     volume: 'Volume',
-    toggleMinimap: 'Alternar Minimapa:',
-    minimapState: {
-      on: 'LIGADO',
-      off: 'DESLIGADO',
-    },
     backToMenu: 'Voltar ao Menu Principal',
   },
   credits: {
@@ -25,7 +30,6 @@ export default {
     developers: 'jspenaq\nElComeBabillas',
     artistsTitle: 'Artistas',
     artists: 'Elsapateiro',
-    backButton: 'Voltar ao Menu Principal',
   },
   gameOver: {
     title: 'FIM DE JOGO',
@@ -46,11 +50,5 @@ export default {
   },
   level1: {
     survive: 'Sobreviver: {time}s',
-    toggleMinimap: 'Alternar Minimapa:',
-    minimapState: {
-      on: 'LIGADO',
-      off: 'DESLIGADO',
-    },
-    backButton: 'Voltar ao Menu Principal',
   },
 }
