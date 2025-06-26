@@ -68,10 +68,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /**
    * The update method for the enemy. This can be overridden by specific enemy types
    * to implement their unique AI and behaviors.
-   * @param time The current game time.
-   * @param delta The time elapsed since the last frame in milliseconds.
+   * @param _time The current game time.
+   * @param _delta The time elapsed since the last frame in milliseconds.
    */
-  update(time: number, delta: number): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  update(_time: number, _delta: number): void {
     // Base enemy update logic (e.g., simple movement, animation updates)
     // Specific enemy types will override this for their AI
   }

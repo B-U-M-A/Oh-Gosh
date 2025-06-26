@@ -88,7 +88,7 @@ export class DifficultyManager {
    * @param callbackScope - The context in which to call the callback
    * @returns The created timer event
    */
-  public createSpawnTimer(callback: () => void, callbackScope: any): Phaser.Time.TimerEvent {
+  public createSpawnTimer(callback: () => void, callbackScope: Phaser.Scene): Phaser.Time.TimerEvent {
     if (this.chaserSpawnTimer) {
       this.chaserSpawnTimer.remove()
     }
