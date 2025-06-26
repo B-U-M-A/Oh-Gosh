@@ -1,10 +1,20 @@
 import Phaser from 'phaser'
-import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS, WIN_CONDITION, PLAYER } from '../utils/constants'
+import {
+  ANIMATION_KEYS,
+  SCENE_KEYS,
+  TEXTURE_KEYS,
+  AUDIO_KEYS,
+  WIN_CONDITION,
+  PLAYER,
+  ROOM_TYPES,
+} from '../utils/constants' // ADD ROOM_TYPES
 import { localizationManager } from '../localization/LocalizationManager'
 import { TileGenerator } from '../world/TileGenerator'
 import { EnemyFactory } from '../game/EnemyFactory'
 import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData'
 import { DifficultyManager } from '../utils/DifficultyManager'
+import { RoomGenerator } from '../world/RoomGenerator' // ADD THIS LINE
+import { type LevelLayoutCell, RoomType } from '../types/WorldTypes' // ADD THIS LINE
 
 /**
  * The main gameplay scene where the player interacts with the game world, enemies, and collects items.
@@ -33,13 +43,20 @@ class Level1Scene extends Phaser.Scene {
   public isMiniMapVisible: boolean = false // Controls mini-map visibility
 
   private tileGenerator?: TileGenerator // Handles procedural world generation
+  private roomGenerator?: RoomGenerator // ADD THIS LINE: Handles room-based generation
   private readonly TILE_SIZE = 64 // Size of each tile in pixels
-  private readonly CHUNK_SIZE_TILES = 10 // Each chunk is 10x10 tiles
-  private readonly WORLD_MAX_CHUNKS_X = 10 // World width in chunks
-  private readonly WORLD_MAX_CHUNKS_Y = 10 // World height in chunks
-  private loadedChunks: Map<string, Phaser.Tilemaps.Tilemap> = new Map() // Cache of generated chunks
-  private currentChunkX: number = 0 // Player's current chunk X coordinate
-  private currentChunkY: number = 0 // Player's current chunk Y coordinate
+  private readonly CHUNK_SIZE_TILES = 10 // Each chunk (room/corridor) is 10x10 tiles
+
+  // NEW: Define the fixed size of our level in chunks (rooms)
+  private readonly LEVEL_WIDTH_CHUNKS = 5 // e.g., 5 rooms wide
+  private readonly LEVEL_HEIGHT_CHUNKS = 5 // e.g., 5 rooms high
+  private levelGrid: LevelLayoutCell[][] = [] // NEW: Stores the high-level layout of rooms
+
+  // private WORLD_MAX_CHUNKS_X = 10 // REMOVE THIS LINE
+  // private WORLD_MAX_CHUNKS_Y = 10 // REMOVE THIS LINE
+  private loadedChunks: Map<string, Phaser.Tilemaps.Tilemap> = new Map() // Cache of generated chunks (now rooms)
+  // private currentChunkX: number = 0 // REMOVE THIS LINE
+  // private currentChunkY: number = 0 // REMOVE THIS LINE
 
   // Difficulty manager
   private difficultyManager!: DifficultyManager
@@ -81,18 +98,32 @@ class Level1Scene extends Phaser.Scene {
     this.winTimeRemaining = WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000 // Reset win timer
 
     this.tileGenerator = new TileGenerator(this, this.TILE_SIZE)
+    this.roomGenerator = new RoomGenerator(this, this.TILE_SIZE) // Initialize RoomGenerator
 
-    // Initial chunk generation around the player's starting position
     this.groundLayers = this.physics.add.group() // Initialize the ground layers group
-    this.currentChunkX = Math.floor(this.WORLD_MAX_CHUNKS_X / 2)
-    this.currentChunkY = Math.floor(this.WORLD_MAX_CHUNKS_Y / 2)
-    this.generateSurroundingChunks(this.currentChunkX, this.currentChunkY)
+
+    // NEW: Generate the entire level layout
+    let playerStartX = 0
+    let playerStartY = 0
+    try {
+      ;[playerStartX, playerStartY] = this.generateLevel()
+    } catch (error) {
+      console.error('Fatal Error: Could not generate level.', error)
+      this.add
+        .text(this.scale.width / 2, this.scale.height / 2, 'CRITICAL ERROR\nCould not start game.', {
+          color: 'red',
+          fontSize: '32px',
+        })
+        .setOrigin(0.5)
+      this.scene.pause()
+      return
+    }
 
     // Calculate player starting position based on the initial chunk
-    const playerX = (this.currentChunkX * this.CHUNK_SIZE_TILES + this.CHUNK_SIZE_TILES / 2) * this.TILE_SIZE
-    const playerY = (this.currentChunkY * this.CHUNK_SIZE_TILES + this.CHUNK_SIZE_TILES / 2) * this.TILE_SIZE
+    // const playerX = (this.currentChunkX * this.CHUNK_SIZE_TILES + this.CHUNK_SIZE_TILES / 2) * this.TILE_SIZE // REMOVE
+    // const playerY = (this.currentChunkY * this.CHUNK_SIZE_TILES + this.CHUNK_SIZE_TILES / 2) * this.TILE_SIZE // REMOVE
     try {
-      this.player = this.physics.add.sprite(playerX, playerY, TEXTURE_KEYS.IDLE)
+      this.player = this.physics.add.sprite(playerStartX, playerStartY, TEXTURE_KEYS.IDLE) // USE playerStartX, playerStartY
       this.player.setCollideWorldBounds(true)
       this.player.setScale(1).play(ANIMATION_KEYS.PLAYER_IDLE)
       this.player.setDepth(10) // Ensure player is always on top of the tiles
@@ -259,6 +290,7 @@ class Level1Scene extends Phaser.Scene {
       // 5. Nullify remaining references
       this.player = undefined
       this.tileGenerator = undefined
+      this.roomGenerator = undefined // NULLIFY NEW REFERENCE
       this.groundLayers = undefined
       this.chasers = undefined
       this.miniMapCamera = undefined
@@ -283,101 +315,124 @@ class Level1Scene extends Phaser.Scene {
   }
 
   /**
-   * Generates a new world chunk at specified coordinates
-   * @param chunkX - X coordinate of chunk in world space
-   * @param chunkY - Y coordinate of chunk in world space
-   * @returns The generated tilemap for the chunk
+   * NEW METHOD: Generates the entire level layout as a grid of rooms and corridors.
+   * This method replaces the dynamic chunk generation.
+   * @returns The starting world coordinates [x, y] for the player.
    */
-  private generateChunk(chunkX: number, chunkY: number): Phaser.Tilemaps.Tilemap {
-    const chunkKey = `${chunkX}_${chunkY}`
-    if (this.loadedChunks.has(chunkKey)) {
-      return this.loadedChunks.get(chunkKey)! // This '!' is safe due to the has() check
+  private generateLevel(): [number, number] {
+    // Initialize the level grid with empty cells
+    this.levelGrid = Array(this.LEVEL_HEIGHT_CHUNKS)
+      .fill(0)
+      .map((_, y) =>
+        Array(this.LEVEL_WIDTH_CHUNKS)
+          .fill(0)
+          .map((__, x) => ({ type: RoomType.EMPTY, chunkX: x, chunkY: y })),
+      )
+
+    // 1. Place Start and End Rooms
+    const startX = Phaser.Math.Between(0, this.LEVEL_WIDTH_CHUNKS - 1)
+    const startY = Phaser.Math.Between(0, this.LEVEL_HEIGHT_CHUNKS - 1)
+    this.levelGrid[startY][startX].type = RoomType.START
+
+    let endX, endY
+    do {
+      endX = Phaser.Math.Between(0, this.LEVEL_WIDTH_CHUNKS - 1)
+      endY = Phaser.Math.Between(0, this.LEVEL_HEIGHT_CHUNKS - 1)
+    } while (endX === startX && endY === startY) // Ensure end is not same as start
+    this.levelGrid[endY][endX].type = RoomType.END
+
+    // 2. Simple Pathfinding (Connect Start to End)
+    // This is a very basic straight-line path. For more complex paths,
+    // you'd use A* or similar algorithms.
+    let currentPathX = startX
+    let currentPathY = startY
+
+    while (currentPathX !== endX || currentPathY !== endY) {
+      const movedX = currentPathX !== endX
+      const movedY = currentPathY !== endY
+
+      if (movedX && (!movedY || Phaser.Math.Between(0, 1) === 0)) {
+        // Move horizontally
+        const nextX = currentPathX + (endX > currentPathX ? 1 : -1)
+        if (this.levelGrid[currentPathY][nextX].type === RoomType.EMPTY) {
+          this.levelGrid[currentPathY][nextX].type = RoomType.CORRIDOR_H
+        }
+        currentPathX = nextX
+      } else if (movedY) {
+        // Move vertically
+        const nextY = currentPathY + (endY > currentPathY ? 1 : -1)
+        if (this.levelGrid[nextY][currentPathX].type === RoomType.EMPTY) {
+          this.levelGrid[nextY][currentPathX].type = RoomType.CORRIDOR_V
+        }
+        currentPathY = nextY
+      }
     }
 
-    const tileMapData: number[][] = []
-    for (let y = 0; y < this.CHUNK_SIZE_TILES; y++) {
-      const row: number[] = []
-      for (let x = 0; x < this.CHUNK_SIZE_TILES; x++) {
-        // Simple procedural generation: mostly grass, with some dirt and dirt paths
-        if (Math.random() < 0.1) {
-          row.push(1) // Dirt path
-        } else if (Math.random() < 0.3) {
-          row.push(2) // Dirt
-        } else {
-          row.push(0) // Grass
+    // 3. Place other room types randomly in remaining EMPTY cells
+    for (let y = 0; y < this.LEVEL_HEIGHT_CHUNKS; y++) {
+      for (let x = 0; x < this.LEVEL_WIDTH_CHUNKS; x++) {
+        if (this.levelGrid[y][x].type === RoomType.EMPTY) {
+          const rand = Math.random()
+          if (rand < 0.3) {
+            this.levelGrid[y][x].type = RoomType.COMBAT
+          } else if (rand < 0.4) {
+            this.levelGrid[y][x].type = RoomType.TREASURE
+          } else if (rand < 0.45) {
+            this.levelGrid[y][x].type = RoomType.SHOP
+          }
+          // Else, it remains EMPTY
         }
       }
-      tileMapData.push(row)
     }
 
-    // Explicit checks for tileGenerator and groundLayers
-    if (!this.tileGenerator) {
-      console.error('Level1Scene: TileGenerator is not initialized. Cannot generate chunk.')
-      this.gameOver() // Trigger game over on critical initialization error
-      return this.make.tilemap({ data: [], tileWidth: this.TILE_SIZE, tileHeight: this.TILE_SIZE }) // Return dummy
+    // 4. Generate all tilemap layers based on the level grid
+    let playerSpawnWorldX = 0
+    let playerSpawnWorldY = 0
+
+    if (!this.roomGenerator) {
+      throw new Error('RoomGenerator is not initialized.')
     }
 
-    let map: Phaser.Tilemaps.Tilemap
-    try {
-      map = this.tileGenerator.createTilemap(tileMapData)
-    } catch (error) {
-      console.error(`Level1Scene: Failed to create tilemap for chunk ${chunkKey}.`, error)
-      this.gameOver() // Trigger game over
-      return this.make.tilemap({ data: [], tileWidth: this.TILE_SIZE, tileHeight: this.TILE_SIZE }) // Return dummy
+    for (let y = 0; y < this.LEVEL_HEIGHT_CHUNKS; y++) {
+      for (let x = 0; x < this.LEVEL_WIDTH_CHUNKS; x++) {
+        const cell = this.levelGrid[y][x]
+        try {
+          const layer = this.roomGenerator.generateRoomLayer(cell.type, cell.chunkX, cell.chunkY, this.CHUNK_SIZE_TILES)
+          this.groundLayers?.add(layer) // Add the generated layer to the group
+          this.loadedChunks.set(`${cell.chunkX}_${cell.chunkY}`, layer.tilemap) // Store the tilemap
+        } catch (error) {
+          console.error(`Failed to generate layer for room type ${cell.type} at (${x},${y}):`, error)
+          // Decide how to handle this error: stop game, skip room, etc.
+        }
+
+        if (cell.type === RoomType.START) {
+          playerSpawnWorldX = (cell.chunkX * this.CHUNK_SIZE_TILES + this.CHUNK_SIZE_TILES / 2) * this.TILE_SIZE
+          playerSpawnWorldY = (cell.chunkY * this.CHUNK_SIZE_TILES + this.CHUNK_SIZE_TILES / 2) * this.TILE_SIZE
+        }
+      }
     }
 
-    if (!this.groundLayers) {
-      console.error('Level1Scene: GroundLayers group is not initialized. Cannot add ground layer.')
-      this.gameOver() // Trigger game over on critical initialization error
-      return map // Return the map that was created, even if layer failed
-    }
-
-    try {
-      const groundLayer = this.tileGenerator.createLayer(map, `Ground_${chunkKey}`, 'world_tileset')
-      groundLayer.setDepth(0)
-      groundLayer.x = chunkX * this.CHUNK_SIZE_TILES * this.TILE_SIZE
-      groundLayer.y = chunkY * this.CHUNK_SIZE_TILES * this.TILE_SIZE
-      this.groundLayers.add(groundLayer)
-    } catch (error) {
-      console.error(`Level1Scene: Failed to create ground layer for chunk ${chunkKey}.`, error)
-      this.gameOver() // Trigger game over
-      return map // Return the map that was created, even if layer failed
-    }
-
-    this.loadedChunks.set(chunkKey, map)
-    return map
+    return [playerSpawnWorldX, playerSpawnWorldY]
   }
 
   /**
-   * Generates chunks around the specified center coordinates
-   * Based on current viewport size to ensure proper loading
-   * @param centerX - Center X coordinate in world space
-   * @param centerY - Center Y coordinate in world space
+   * REMOVED: This method is no longer needed as the entire level is generated at once.
+   * private generateChunk(chunkX: number, chunkY: number): Phaser.Tilemaps.Tilemap { ... }
    */
-  private generateSurroundingChunks(centerX: number, centerY: number): void {
-    const chunksNeededX = Math.ceil(this.scale.width / (this.CHUNK_SIZE_TILES * this.TILE_SIZE)) + 2
-    const chunksNeededY = Math.ceil(this.scale.height / (this.CHUNK_SIZE_TILES * this.TILE_SIZE)) + 2
 
-    const startX = Math.max(0, centerX - Math.floor(chunksNeededX / 2))
-    const endX = Math.min(this.WORLD_MAX_CHUNKS_X - 1, centerX + Math.ceil(chunksNeededX / 2))
-    const startY = Math.max(0, centerY - Math.floor(chunksNeededY / 2))
-    const endY = Math.min(this.WORLD_MAX_CHUNKS_Y - 1, centerY + Math.ceil(chunksNeededY / 2))
-
-    for (let y = startY; y <= endY; y++) {
-      for (let x = startX; x <= endX; x++) {
-        this.generateChunk(x, y)
-      }
-    }
-    this.updateWorldBounds()
-  }
+  /**
+   * REMOVED: This method is no longer needed as the entire level is generated at once.
+   * private generateSurroundingChunks(centerX: number, centerY: number): void { ... }
+   */
 
   /**
    * Updates world bounds to match current world dimensions
    * Ensures physics and camera stay within proper limits
    */
   private updateWorldBounds(): void {
-    const worldWidth = this.WORLD_MAX_CHUNKS_X * this.CHUNK_SIZE_TILES * this.TILE_SIZE
-    const worldHeight = this.WORLD_MAX_CHUNKS_Y * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+    // World dimensions are now fixed based on the level grid size
+    const worldWidth = this.LEVEL_WIDTH_CHUNKS * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+    const worldHeight = this.LEVEL_HEIGHT_CHUNKS * this.CHUNK_SIZE_TILES * this.TILE_SIZE
     this.physics.world.setBounds(0, 0, worldWidth, worldHeight)
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight)
   }
@@ -461,9 +516,9 @@ class Level1Scene extends Phaser.Scene {
           break
       }
 
-      // Ensure spawn position is within world bounds
-      const worldWidth = this.WORLD_MAX_CHUNKS_X * this.CHUNK_SIZE_TILES * this.TILE_SIZE
-      const worldHeight = this.WORLD_MAX_CHUNKS_Y * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+      // Ensure spawn position is within world bounds (now fixed world bounds)
+      const worldWidth = this.LEVEL_WIDTH_CHUNKS * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+      const worldHeight = this.LEVEL_HEIGHT_CHUNKS * this.CHUNK_SIZE_TILES * this.TILE_SIZE
       x = Phaser.Math.Clamp(x, 0, worldWidth)
       y = Phaser.Math.Clamp(y, 0, worldHeight)
 
@@ -500,7 +555,7 @@ class Level1Scene extends Phaser.Scene {
    * - Player movement and input
    * - Enemy AI updates
    * - Score tracking
-   * - World chunk loading
+   * - World chunk loading (REMOVED)
    */
   update(): void {
     if (!this.player || !this.player.body || !this.wasdCursors || !this.arrowCursors || this.isGameOver) return
@@ -515,14 +570,14 @@ class Level1Scene extends Phaser.Scene {
       return // Stop further updates if game is won
     }
 
-    const playerChunkX = Math.floor(this.player.x / (this.CHUNK_SIZE_TILES * this.TILE_SIZE))
-    const playerChunkY = Math.floor(this.player.y / (this.CHUNK_SIZE_TILES * this.TILE_SIZE))
-
-    if (playerChunkX !== this.currentChunkX || playerChunkY !== this.currentChunkY) {
-      this.currentChunkX = playerChunkX
-      this.currentChunkY = playerChunkY
-      this.generateSurroundingChunks(this.currentChunkX, this.currentChunkY)
-    }
+    // REMOVED: Dynamic chunk loading based on player position is no longer needed
+    // const playerChunkX = Math.floor(this.player.x / (this.CHUNK_SIZE_TILES * this.TILE_SIZE))
+    // const playerChunkY = Math.floor(this.player.y / (this.CHUNK_SIZE_TILES * this.TILE_SIZE))
+    // if (playerChunkX !== this.currentChunkX || playerChunkY !== this.currentChunkY) {
+    //   this.currentChunkX = playerChunkX
+    //   this.currentChunkY = playerChunkY
+    //   this.generateSurroundingChunks(this.currentChunkX, this.currentChunkY)
+    // }
 
     const body = this.player.body as Phaser.Physics.Arcade.Body
     body.setVelocity(0)
@@ -593,10 +648,6 @@ class Level1Scene extends Phaser.Scene {
     })
   }
 
-  /**
-   * Updates all text elements in the scene based on the current language.
-   * This method is called when the language changes via LocalizationManager.
-   */
   /**
    * Updates all UI text elements based on current language
    * Called when language changes or text needs refreshing

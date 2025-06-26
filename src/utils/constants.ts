@@ -1,6 +1,8 @@
 /**
  * Player-related constants
  */
+import { RoomType } from '../types/WorldTypes' // ADD THIS LINE
+
 export const PLAYER = {
   /**
    * Base movement speed of the player character in pixels per second
@@ -23,6 +25,7 @@ export const TILE_KEYS = {
   GRASS: 'grass_tile',
   DIRT: 'dirt_tile',
   DIRT_PATH: 'dirt_path_tile',
+  WALL: 'wall_tile', // ADD THIS LINE for obstacles
 }
 
 /**
@@ -115,3 +118,8 @@ export const WIN_CONDITION = {
    */
   TIME_TO_SURVIVE_MS: 40000, // Survive for 40 seconds to win
 }
+
+/**
+ * Room types for procedural generation
+ */
+export const ROOM_TYPES = RoomType // ADD THIS LINE
