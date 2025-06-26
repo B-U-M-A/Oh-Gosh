@@ -525,6 +525,11 @@ class Level1Scene extends Phaser.Scene {
   }
 
   private updateDifficulty(): void {
+    // Do not update difficulty if the scene is paused
+    if (this.scene.isPaused()) {
+      return
+    }
+
     // Only update difficulty if score has increased enough since last update
     if (this.score - this.lastDifficultyUpdateScore < DIFFICULTY.DIFFICULTY_UPDATE_INTERVAL_SCORE) {
       return
