@@ -43,7 +43,7 @@ class Level1Scene extends Phaser.Scene {
   private lastDifficultyUpdateScore: number = 0
 
   // Debug and distance constants
-  private readonly DEBUG_DISTANCE = false
+  private readonly DEBUG_DISTANCE = false // Enable debug logging
   private readonly MAX_DISTANCE_MULTIPLIER = 1 // 1x window width
 
   // Win condition properties
@@ -393,8 +393,8 @@ class Level1Scene extends Phaser.Scene {
     // Spawn chaser at a random position outside the camera view but within world bounds
     const camera = this.cameras.main
     let x, y
-    const spawnPadding = 100 // Distance outside camera view
-    const maxDistanceFromPlayer = this.cameras.main.worldView.height * this.MAX_DISTANCE_MULTIPLIER // Use window width instead of player width
+    const spawnPadding = 100 // Fixed padding
+    console.log('Attempting to spawn chaser') // Debug log
 
     // Determine spawn side (top, bottom, left, right)
     const side = Phaser.Math.Between(0, 3)
@@ -430,20 +430,11 @@ class Level1Scene extends Phaser.Scene {
       x = Phaser.Math.Clamp(x, 0, worldWidth)
       y = Phaser.Math.Clamp(y, 0, worldHeight)
 
-      // Check distance from player if player exists
+      // Simple spawn position validation
       if (this.player) {
-        const distance = Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y)
-        if (distance <= maxDistanceFromPlayer) {
-          break // Good spawn position found
-        } else {
-          // Adjust position to be closer to player
-          const angle = Phaser.Math.Angle.Between(x, y, this.player.x, this.player.y)
-          const newDistance = maxDistanceFromPlayer * 0 // Aim for 80% of max distance
-          x = this.player.x + Math.cos(angle) * newDistance
-          y = this.player.y + Math.sin(angle) * newDistance
-          break
-        }
+        console.log(`Spawning at x: ${x}, y: ${y}`) // Debug log
       }
+      break // Accept this position
     }
 
     // Get the configuration for the basic chaser enemy
