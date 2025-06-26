@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS, LOCAL_STORAGE_KEYS } from '../utils/constants'
+import localization from '../localization/en'
 
 class GameOverScene extends Phaser.Scene {
   private score: number = 0
@@ -64,7 +65,7 @@ class GameOverScene extends Phaser.Scene {
     const gameOverFontSize = Math.max(64, 128 * scaleFactor)
     if (!this.gameOverText) {
       this.gameOverText = this.add
-        .text(width / 2, 150 * scaleFactor, 'GAME OVER', {
+        .text(width / 2, 150 * scaleFactor, localization.gameOver.title, {
           fontFamily: 'Staatliches',
           fontSize: `${gameOverFontSize}px`,
           color: '#ffdd00',
@@ -107,7 +108,7 @@ class GameOverScene extends Phaser.Scene {
     const scoreFontSize = Math.max(32, 64 * scaleFactor)
     if (!this.scoreText) {
       this.scoreText = this.add
-        .text(width / 2, 250 * scaleFactor, `Your Score: ${this.score.toFixed(2)}`, {
+        .text(width / 2, 250 * scaleFactor, localization.gameOver.yourScore.replace('{score}', this.score.toFixed(2)), {
           fontFamily: 'Staatliches',
           fontSize: `${scoreFontSize}px`,
           color: '#ffffff',
@@ -125,7 +126,7 @@ class GameOverScene extends Phaser.Scene {
     const highScoreFontSize = Math.max(28, 56 * scaleFactor) // Slightly smaller than current score, but prominent
     if (!this.highScoreText) {
       this.highScoreText = this.add
-        .text(width / 2, 320 * scaleFactor, `High Score: ${this.highScore.toFixed(2)}`, {
+        .text(width / 2, 320 * scaleFactor, localization.gameOver.highScore.replace('{score}', this.highScore.toFixed(2)), {
           fontFamily: 'Staatliches',
           fontSize: `${highScoreFontSize}px`,
           color: '#ffff00', // Yellow color for high score
@@ -163,7 +164,7 @@ class GameOverScene extends Phaser.Scene {
     const restartFontSize = Math.max(28, 48 * scaleFactor)
     if (!this.restartButton) {
       this.restartButton = this.add
-        .text(width / 2, height - 80 * scaleFactor, 'Click or Press Enter to Restart', {
+        .text(width / 2, height - 80 * scaleFactor, localization.gameOver.restartPrompt, {
           fontFamily: 'Staatliches',
           fontSize: `${restartFontSize}px`,
           color: '#00FFFF', // Cyan

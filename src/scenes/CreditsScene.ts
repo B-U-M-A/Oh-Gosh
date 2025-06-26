@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { SCENE_KEYS } from '../utils/constants'
+import localization from '../localization/en'
 
 class CreditsScene extends Phaser.Scene {
   private titleText?: Phaser.GameObjects.Text
@@ -15,18 +16,12 @@ class CreditsScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor('#000000') // Black background
-
-    // Add resize event listener
+    this.cameras.main.setBackgroundColor('#000000')
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
-
-    // Initial layout
     this.handleResize(this.scale.gameSize)
 
-    // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
-      // Nullify references to allow garbage collection
       this.titleText = undefined
       this.purposeText = undefined
       this.developersTitle = undefined
@@ -39,7 +34,6 @@ class CreditsScene extends Phaser.Scene {
 
   private handleResize(gameSize: Phaser.Structs.Size): void {
     const { width, height } = gameSize
-
     const baseWidth = 800
     const baseHeight = 600
     const scaleFactor = Math.min(width / baseWidth, height / baseHeight)
@@ -48,11 +42,11 @@ class CreditsScene extends Phaser.Scene {
     const titleFontSize = Math.max(32, 48 * scaleFactor * 1.2)
     if (!this.titleText) {
       this.titleText = this.add
-        .text(width / 2, 50 * scaleFactor, 'Oh Gosh', {
-          fontSize: `${titleFontSize}px`,
-          color: '#FF69B4', // Hot Pink
+        .text(width / 2, 50 * scaleFactor, localization.credits.title, {
+          fontSize: titleFontSize + 'px',
+          color: '#FF69B4',
           align: 'center',
-          stroke: '#FFFF00', // Yellow stroke
+          stroke: '#FFFF00',
           strokeThickness: 6 * scaleFactor,
           shadow: {
             offsetX: 3 * scaleFactor,
@@ -64,7 +58,7 @@ class CreditsScene extends Phaser.Scene {
         })
         .setOrigin(0.5)
     } else {
-      this.titleText.setFontSize(`${titleFontSize}px`)
+      this.titleText.setFontSize(titleFontSize + 'px')
       this.titleText.setStroke('#FFFF00', 6 * scaleFactor)
       this.titleText.setShadow(3 * scaleFactor, 3 * scaleFactor, '#000000', 6 * scaleFactor, true, false)
       this.titleText.setPosition(width / 2, 50 * scaleFactor)
@@ -72,20 +66,17 @@ class CreditsScene extends Phaser.Scene {
 
     // Game Purpose Summary
     const purposeFontSize = Math.max(16, 20 * scaleFactor)
-    const gamePurposeText = `
-Oh Gosh is an arcade-style, single-player, browser-based video game where players control the character "Juan Becerra" with the objective of escaping from multiple pursuing entities referred to as "C"s. Featuring a distinct pixel art aesthetic, the game focuses on evasion and survival, offering an engaging and challenging experience directly within your web browser.
-    `
     if (!this.purposeText) {
       this.purposeText = this.add
-        .text(width / 2, 150 * scaleFactor, gamePurposeText.trim(), {
-          fontSize: `${purposeFontSize}px`,
+        .text(width / 2, 150 * scaleFactor, localization.credits.purpose, {
+          fontSize: purposeFontSize + 'px',
           color: '#ffffff',
           align: 'center',
           wordWrap: { width: width - 100 * scaleFactor, useAdvancedWrap: true },
         })
         .setOrigin(0.5)
     } else {
-      this.purposeText.setFontSize(`${purposeFontSize}px`)
+      this.purposeText.setFontSize(purposeFontSize + 'px')
       this.purposeText.setWordWrapWidth(width - 100 * scaleFactor, true)
       this.purposeText.setPosition(width / 2, 150 * scaleFactor)
     }
@@ -96,54 +87,54 @@ Oh Gosh is an arcade-style, single-player, browser-based video game where player
 
     if (!this.developersTitle) {
       this.developersTitle = this.add
-        .text(width / 2, height / 2 + 100 * scaleFactor, 'Developers', {
-          fontSize: `${sectionTitleFontSize}px`,
-          color: '#00FFFF', // Cyan
+        .text(width / 2, height / 2 + 100 * scaleFactor, localization.credits.developersTitle, {
+          fontSize: sectionTitleFontSize + 'px',
+          color: '#00FFFF',
           align: 'center',
         })
         .setOrigin(0.5)
     } else {
-      this.developersTitle.setFontSize(`${sectionTitleFontSize}px`)
+      this.developersTitle.setFontSize(sectionTitleFontSize + 'px')
       this.developersTitle.setPosition(width / 2, height / 2 + 100 * scaleFactor)
     }
 
     if (!this.developersText) {
       this.developersText = this.add
-        .text(width / 2, height / 2 + 150 * scaleFactor, 'jspenaq\nElComeBabillas', {
-          fontSize: `${sectionTextFontSize}px`,
+        .text(width / 2, height / 2 + 150 * scaleFactor, localization.credits.developers, {
+          fontSize: sectionTextFontSize + 'px',
           color: '#ffffff',
           align: 'center',
         })
         .setOrigin(0.5)
     } else {
-      this.developersText.setFontSize(`${sectionTextFontSize}px`)
+      this.developersText.setFontSize(sectionTextFontSize + 'px')
       this.developersText.setPosition(width / 2, height / 2 + 150 * scaleFactor)
     }
 
     // Artists Section
     if (!this.artistsTitle) {
       this.artistsTitle = this.add
-        .text(width / 2, height / 2 + 250 * scaleFactor, 'Artists', {
-          fontSize: `${sectionTitleFontSize}px`,
-          color: '#00FFFF', // Cyan
+        .text(width / 2, height / 2 + 250 * scaleFactor, localization.credits.artistsTitle, {
+          fontSize: sectionTitleFontSize + 'px',
+          color: '#00FFFF',
           align: 'center',
         })
         .setOrigin(0.5)
     } else {
-      this.artistsTitle.setFontSize(`${sectionTitleFontSize}px`)
+      this.artistsTitle.setFontSize(sectionTitleFontSize + 'px')
       this.artistsTitle.setPosition(width / 2, height / 2 + 250 * scaleFactor)
     }
 
     if (!this.artistsText) {
       this.artistsText = this.add
-        .text(width / 2, height / 2 + 300 * scaleFactor, 'Elsapateiro', {
-          fontSize: `${sectionTextFontSize}px`,
+        .text(width / 2, height / 2 + 300 * scaleFactor, localization.credits.artists, {
+          fontSize: sectionTextFontSize + 'px',
           color: '#ffffff',
           align: 'center',
         })
         .setOrigin(0.5)
     } else {
-      this.artistsText.setFontSize(`${sectionTextFontSize}px`)
+      this.artistsText.setFontSize(sectionTextFontSize + 'px')
       this.artistsText.setPosition(width / 2, height / 2 + 300 * scaleFactor)
     }
 
@@ -153,19 +144,19 @@ Oh Gosh is an arcade-style, single-player, browser-based video game where player
     const buttonPaddingY = 10 * scaleFactor
 
     const buttonStyle = {
-      fontSize: `${buttonFontSize}px`,
-      color: '#00FFFF', // Cyan
-      backgroundColor: '#8A2BE2', // Blue Violet
+      fontSize: buttonFontSize + 'px',
+      color: '#00FFFF',
+      backgroundColor: '#8A2BE2',
       padding: { x: buttonPaddingX, y: buttonPaddingY },
     }
 
     if (!this.backButton) {
       this.backButton = this.add
-        .text(width / 2, height - 50 * scaleFactor, 'Back to Main Menu', buttonStyle)
+        .text(width / 2, height - 50 * scaleFactor, localization.credits.backButton, buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', () => this.scene.start(SCENE_KEYS.MAIN_MENU))
-        .on('pointerover', () => this.backButton?.setStyle({ color: '#FFD700' })) // Gold
+        .on('pointerover', () => this.backButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.backButton?.setStyle({ color: '#00FFFF' }))
     } else {
       this.backButton.setPosition(width / 2, height - 50 * scaleFactor).setStyle(buttonStyle)

@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS } from '../utils/constants'
+import localization from '../localization/en'
 
 class WinScene extends Phaser.Scene {
   private score: number = 0
@@ -50,7 +51,7 @@ class WinScene extends Phaser.Scene {
     const winFontSize = Math.max(64, 128 * scaleFactor)
     if (!this.winText) {
       this.winText = this.add
-        .text(width / 2, 150 * scaleFactor, 'YOU WIN!', {
+        .text(width / 2, 150 * scaleFactor, localization.win.title, {
           fontFamily: 'Staatliches',
           fontSize: `${winFontSize}px`,
           color: '#00ff00', // Green for win
@@ -93,7 +94,7 @@ class WinScene extends Phaser.Scene {
     const scoreFontSize = Math.max(32, 64 * scaleFactor)
     if (!this.scoreText) {
       this.scoreText = this.add
-        .text(width / 2, 250 * scaleFactor, `Time Survived: ${this.score.toFixed(2)}s`, {
+        .text(width / 2, 250 * scaleFactor, localization.win.timeSurvived.replace('{score}', this.score.toFixed(2)), {
           fontFamily: 'Staatliches',
           fontSize: `${scoreFontSize}px`,
           color: '#ffffff',
@@ -131,7 +132,7 @@ class WinScene extends Phaser.Scene {
     const restartFontSize = Math.max(28, 48 * scaleFactor)
     if (!this.restartButton) {
       this.restartButton = this.add
-        .text(width / 2, height - 80 * scaleFactor, 'Click or Press Enter to Restart', {
+        .text(width / 2, height - 80 * scaleFactor, localization.win.restartPrompt, {
           fontFamily: 'Staatliches',
           fontSize: `${restartFontSize}px`,
           color: '#00FFFF', // Cyan

@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS } from '../utils/constants'
+import localization from '../localization/en'
 
 class MainMenuScene extends Phaser.Scene {
   private player?: Phaser.GameObjects.Sprite
@@ -31,7 +32,7 @@ class MainMenuScene extends Phaser.Scene {
     // Oh-Gosh Title next to player
     const titleFontSize = Math.max(32, 64 * scaleFactor * 1.5) // Make it bigger, and scale with window, min 32px
     this.titleText = this.add
-      .text(this.player.x + this.player.displayWidth / 2 + 50 * scaleFactor, this.scale.height / 2, 'Oh-Gosh', {
+      .text(this.player.x + this.player.displayWidth / 2 + 50 * scaleFactor, this.scale.height / 2, localization.mainMenu.title, {
         fontSize: `${titleFontSize}px`,
         color: '#FF69B4', // Hot Pink
         stroke: '#FFFF00', // Yellow stroke
@@ -63,7 +64,7 @@ class MainMenuScene extends Phaser.Scene {
     }
 
     this.fastPlayButton = this.add
-      .text(this.scale.width - buttonXOffset, this.scale.height - buttonYOffset, 'Fast Play', buttonStyle)
+      .text(this.scale.width - buttonXOffset, this.scale.height - buttonYOffset, localization.mainMenu.fastPlay, buttonStyle)
       .setOrigin(1, 0.5) // Align right of text with buttonX, center vertically
       .setInteractive()
       .on('pointerdown', () => this.scene.start(SCENE_KEYS.LEVEL1))
@@ -74,7 +75,7 @@ class MainMenuScene extends Phaser.Scene {
       .text(
         this.scale.width - buttonXOffset,
         this.scale.height - buttonYOffset + buttonSpacing,
-        'Select Level',
+        localization.mainMenu.selectLevel,
         buttonStyle,
       )
       .setOrigin(1, 0.5)
@@ -87,7 +88,7 @@ class MainMenuScene extends Phaser.Scene {
       .text(
         this.scale.width - buttonXOffset,
         this.scale.height - buttonYOffset + buttonSpacing * 2,
-        'Credits',
+        localization.mainMenu.credits,
         buttonStyle,
       )
       .setOrigin(1, 0.5)
