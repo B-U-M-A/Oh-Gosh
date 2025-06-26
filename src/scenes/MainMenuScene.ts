@@ -263,16 +263,7 @@ class MainMenuScene extends Phaser.Scene {
       )
       .setOrigin(1, 0.5)
       .setInteractive()
-      .on('pointerdown', () => {
-        // Store current button states before pausing
-        this.buttons.forEach((button) => {
-          if (button.input) {
-            button.input.enabled = false
-          }
-        })
-        this.scene.launch(SCENE_KEYS.OPTIONS)
-        this.scene.pause(SCENE_KEYS.MAIN_MENU)
-      })
+      .on('pointerdown', () => this.scene.switch(SCENE_KEYS.OPTIONS))
       .on('pointerover', () => {
         this.updateSelectionVisuals()
       })

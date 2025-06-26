@@ -601,9 +601,7 @@ class OptionsScene extends Phaser.Scene {
     this.input.off('drag')
 
     // Resume and bring MainMenu to front
-    this.scene.resume(SCENE_KEYS.MAIN_MENU)
-    this.scene.bringToTop(SCENE_KEYS.MAIN_MENU)
-
+    this.scene.switch(SCENE_KEYS.MAIN_MENU)
     // Set visibility before stopping
     this.scene.setVisible(false)
     this.scene.stop()
