@@ -16,6 +16,7 @@ export const PLAYER = {
 export const TEXTURE_KEYS = {
   IDLE: 'player_character_idle',
   WALK: 'player_character_walk',
+  WORLD: 'world_tileset',
 }
 
 /**
@@ -50,12 +51,14 @@ export const AUDIO_KEYS = {
 export const SCENE_KEYS = {
   PRELOADER: 'PreloaderScene',
   LEVEL1: 'Level1Scene',
+  LEVEL2: 'Level2Scene',
   GAME_OVER: 'GameOverScene',
   PAUSE: 'PauseScene',
   MAIN_MENU: 'MainMenuScene',
   CREDITS: 'CreditsScene',
   WIN: 'WinScene',
   OPTIONS: 'OptionsScene',
+  LEVEL_SELECTOR: 'LevelSelectorScene',
 }
 
 /**

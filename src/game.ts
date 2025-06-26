@@ -1,12 +1,14 @@
 import Phaser from 'phaser'
 import GameOverScene from './scenes/GameOverScene'
 import Level1Scene from './scenes/Level1Scene'
+import Level2Scene from './scenes/Level2Scene'
 import PreloaderScene from './scenes/PreloaderScene'
 import PauseScene from './scenes/PauseScene'
 import CreditsScene from './scenes/CreditsScene'
 import MainMenuScene from './scenes/MainMenuScene'
 import WinScene from './scenes/WinScene'
 import OptionsScene from './scenes/OptionsScene'
+import LevelSelectorScene from './scenes/LevelSelectorScene'
 
 /**
  * Main Phaser game configuration object.
@@ -27,7 +29,18 @@ const config: Phaser.Types.Core.GameConfig = {
   // DOM element ID where the game canvas will be inserted
   parent: 'game-container',
   // Array of scenes that make up the game, in order of execution
-  scene: [PreloaderScene, MainMenuScene, Level1Scene, GameOverScene, PauseScene, CreditsScene, WinScene, OptionsScene],
+  scene: [
+    PreloaderScene,
+    MainMenuScene,
+    LevelSelectorScene,
+    Level1Scene,
+    Level2Scene,
+    GameOverScene,
+    PauseScene,
+    CreditsScene,
+    WinScene,
+    OptionsScene,
+  ],
   physics: {
     default: 'arcade',
     arcade: {

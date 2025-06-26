@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS } from '../utils/constants'
+import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS } from '../utils/constants'
 import { localizationManager } from '../localization/LocalizationManager'
 
 /**
@@ -169,7 +169,39 @@ class MainMenuScene extends Phaser.Scene {
       )
       .setOrigin(1, 0.5)
       .setInteractive()
-      .on('pointerdown', () => this.scene.start(SCENE_KEYS.LEVEL1)) // Still goes to Level1 for now
+      .on('pointerdown', () => {
+        this.scene.start(SCENE_KEYS.LEVEL_SELECTOR, {
+          levels: [
+            {
+              id: SCENE_KEYS.LEVEL1,
+              name: 'Level 1',
+              config: {
+                tilemapKey: 'world',
+                musicKey: AUDIO_KEYS.IN_GAME_MUSIC,
+                timeToSurviveMs: 40000,
+                levelWidthChunks: 5,
+                levelHeightChunks: 5,
+                initialDifficulty: 1,
+                enemySpawnRate: 3,
+              },
+            },
+            {
+              id: SCENE_KEYS.LEVEL2,
+              name: 'Level 2',
+              config: {
+                tilemapKey: 'world',
+                tilemapJson: 'assets/tilemap/oh-gosh-map.tmj',
+                musicKey: AUDIO_KEYS.IN_GAME_MUSIC,
+                timeToSurviveMs: 60000,
+                levelWidthChunks: 0,
+                levelHeightChunks: 0,
+                initialDifficulty: 2,
+                enemySpawnRate: 5,
+              },
+            },
+          ],
+        })
+      })
       .on('pointerover', () => {
         this.updateSelectionVisuals()
       })
@@ -419,7 +451,10 @@ class MainMenuScene extends Phaser.Scene {
     }
 
     this.buttons.forEach((button, index) => {
-      const isHovered = button.input?.pointerOver // Check if the mouse is currently over this button
+      const isHovered = button.input?.hitArea?.contains(
+        this.input.activePointer.x - button.x,
+        this.input.activePointer.y - button.y,
+      )
 
       if (index === this.selectedButtonIndex) {
         button.setStyle(selectedStyle)
