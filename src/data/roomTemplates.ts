@@ -18,28 +18,47 @@ export const ROOM_TEMPLATES: Record<RoomType, RoomTemplate> = {
   [RoomType.START]: {
     tiles: Array(10)
       .fill(0)
-      .map(() => Array(10).fill(TILE_GRASS)), // All grass
+      .map((_, y) =>
+        Array(10)
+          .fill(0)
+          .map((_, x) =>
+            // Mark border tiles (first and last row/column) as walls
+            y === 0 || y === 9 || x === 0 || x === 9 ? TILE_WALL : TILE_GRASS,
+          ),
+      ),
     obstacles: [],
     entities: [],
   },
   [RoomType.END]: {
     tiles: Array(10)
       .fill(0)
-      .map(() => Array(10).fill(TILE_GRASS)),
+      .map((_, y) =>
+        Array(10)
+          .fill(0)
+          .map((_, x) => (y === 0 || y === 9 || x === 0 || x === 9 ? TILE_WALL : TILE_GRASS)),
+      ),
     obstacles: [],
     entities: [],
   },
   [RoomType.EMPTY]: {
     tiles: Array(10)
       .fill(0)
-      .map(() => Array(10).fill(TILE_GRASS)),
+      .map((_, y) =>
+        Array(10)
+          .fill(0)
+          .map((_, x) => (y === 0 || y === 9 || x === 0 || x === 9 ? TILE_WALL : TILE_GRASS)),
+      ),
     obstacles: [],
     entities: [],
   },
   [RoomType.COMBAT]: {
     tiles: Array(10)
       .fill(0)
-      .map(() => Array(10).fill(TILE_DIRT)), // Dirt floor for combat
+      .map((_, y) =>
+        Array(10)
+          .fill(0)
+          .map((_, x) => (y === 0 || y === 9 || x === 0 || x === 9 ? TILE_WALL : TILE_DIRT)),
+      ), // Dirt floor with wall borders for combat
     obstacles: [
       { x: 2, y: 2, tileIndex: TILE_WALL },
       { x: 7, y: 2, tileIndex: TILE_WALL },
@@ -75,14 +94,26 @@ export const ROOM_TEMPLATES: Record<RoomType, RoomTemplate> = {
   [RoomType.CORRIDOR_H]: {
     tiles: Array(10)
       .fill(0)
-      .map(() => Array(10).fill(TILE_GRASS)),
+      .map((_, y) =>
+        Array(10)
+          .fill(0)
+          .map((_, x) =>
+            y === 0 || y === 9 || x === 0 || x === 9 ? TILE_WALL : y >= 4 && y <= 5 ? TILE_DIRT_PATH : TILE_GRASS,
+          ),
+      ),
     obstacles: [],
     entities: [],
   },
   [RoomType.CORRIDOR_V]: {
     tiles: Array(10)
       .fill(0)
-      .map(() => Array(10).fill(TILE_GRASS)),
+      .map((_, y) =>
+        Array(10)
+          .fill(0)
+          .map((_, x) =>
+            y === 0 || y === 9 || x === 0 || x === 9 ? TILE_WALL : x >= 4 && x <= 5 ? TILE_DIRT_PATH : TILE_GRASS,
+          ),
+      ),
     obstacles: [],
     entities: [],
   },

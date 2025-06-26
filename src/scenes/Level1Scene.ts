@@ -1,7 +1,7 @@
 import { SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS } from '../utils/constants'
 import { RoomType } from '../types/WorldTypes'
 import { LevelScene, type LevelConfig } from './LevelScene' // Import LevelScene and LevelConfig
-import { RoomGenerator } from '../world/RoomGenerator' // Keep this, as it's used in generateProceduralLevel
+// RoomGenerator is used via this.roomGenerator from LevelScene
 
 /**
  * The main gameplay scene where the player interacts with the game world, enemies, and collects items.
@@ -131,7 +131,10 @@ class Level1Scene extends LevelScene {
         try {
           // Use the base class's TILE_SIZE and CHUNK_SIZE_TILES
           const layer = this.roomGenerator.generateRoomLayer(cell.type, cell.chunkX, cell.chunkY, this.CHUNK_SIZE_TILES)
-          this.groundLayers?.add(layer) // Add the generated layer to the group
+          // Only add to groundLayers if it contains collidable tiles (wall tiles)
+          if (layer.layer.data.some((row) => row.some((tile) => tile && tile.index === 3))) {
+            this.groundLayers?.add(layer)
+          }
           this.loadedChunks.set(`${cell.chunkX}_${cell.chunkY}`, layer.tilemap) // Store the tilemap
         } catch (error) {
           console.error(`Failed to generate layer for room type ${cell.type} at (${x},${y}):`, error)

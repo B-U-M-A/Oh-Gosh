@@ -160,7 +160,7 @@ export abstract class LevelScene extends Phaser.Scene {
     // Initialize world generation utilities
     this.tileGenerator = new TileGenerator(this, this.TILE_SIZE)
     this.roomGenerator = new RoomGenerator(this, this.TILE_SIZE)
-    // Create a physics group for ground layers (e.g., for collision detection)
+    // Create a physics group for collidable ground layers
     this.groundLayers = this.physics.add.group()
 
     let playerStartX = 0
@@ -182,10 +182,20 @@ export abstract class LevelScene extends Phaser.Scene {
       this.initializeEnemies()
       this.initializeTimers()
 
-      // Add collision between player and ground layers.
-      // This is now handled here to apply to both procedural and tilemap levels.
-      if (this.player && this.groundLayers) {
-        this.physics.add.collider(this.player, this.groundLayers)
+      // Only add collision between player and ground layers for tilemap levels
+      const config = this.getLevelConfig()
+      if (config.levelType === 'tilemap' && this.player && this.groundLayers) {
+        this.groundLayers.getChildren().forEach((layer) => {
+          if (layer instanceof Phaser.Tilemaps.TilemapLayer) {
+            // Only enable collision for specific wall tiles (index 3)
+            // and only on those exact tiles, not the whole layer
+            layer.setCollision([3])
+          }
+        })
+        // Create collider with ground layers marked as immovable
+        this.physics.add.collider(this.player, this.groundLayers, undefined, undefined, {
+          isStatic: true,
+        })
       }
     } catch (error) {
       console.error('Initialization failed:', error)
@@ -216,12 +226,15 @@ export abstract class LevelScene extends Phaser.Scene {
       // Add the tileset image to the map
       const tileset = map.addTilesetImage('world_tileset', TEXTURE_KEYS.WORLD)
 
-      // Create layers from the tilemap and enable collision for 'Tile Layer 1'
+      // Create layers from the tilemap
       const groundLayer = map.createLayer('Tile Layer 1', tileset as Phaser.Tilemaps.Tileset, 0, 0)
       if (groundLayer) {
-        groundLayer.setCollisionByProperty({ collides: true })
-        // Add ground layer to the group for collision detection with player/enemies
-        this.groundLayers?.add(groundLayer)
+        // Only enable collision for border tiles (index 3)
+        groundLayer.setCollision([3])
+        // Only add to groundLayers if it contains collidable tiles
+        if (groundLayer.layer.data.some((row) => row.some((tile) => tile && tile.index === 3))) {
+          this.groundLayers?.add(groundLayer)
+        }
       }
 
       // Set world bounds based on the tilemap's dimensions
