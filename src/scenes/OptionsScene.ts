@@ -13,6 +13,7 @@ class OptionsScene extends Phaser.Scene {
   private volumeHandle?: Phaser.GameObjects.Rectangle
   private toggleMinimapButton?: Phaser.GameObjects.Text
   private backButton?: Phaser.GameObjects.Text
+  private portugueseButton?: Phaser.GameObjects.Text
 
   constructor() {
     super({ key: SCENE_KEYS.OPTIONS })
@@ -129,31 +130,40 @@ class OptionsScene extends Phaser.Scene {
     // English Button
     if (!this.englishButton) {
       this.englishButton = this.add
-        .text(width / 2 - langButtonWidth / 2 - langButtonSpacing / 2, currentY, 'English', buttonStyle)
+        .text(width / 2 - langButtonWidth - langButtonSpacing, currentY, 'English', buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', () => this.setLanguage('en'))
         .on('pointerover', () => this.englishButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.englishButton?.setStyle({ color: '#00FFFF' }))
     } else {
-      this.englishButton
-        .setPosition(width / 2 - langButtonWidth / 2 - langButtonSpacing / 2, currentY)
-        .setStyle(buttonStyle)
+      this.englishButton.setPosition(width / 2 - langButtonWidth - langButtonSpacing, currentY).setStyle(buttonStyle)
     }
 
     // Spanish Button
     if (!this.spanishButton) {
       this.spanishButton = this.add
-        .text(width / 2 + langButtonWidth / 2 + langButtonSpacing / 2, currentY, 'Español', buttonStyle)
+        .text(width / 2, currentY, 'Español', buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', () => this.setLanguage('es'))
         .on('pointerover', () => this.spanishButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.spanishButton?.setStyle({ color: '#00FFFF' }))
     } else {
-      this.spanishButton
-        .setPosition(width / 2 + langButtonWidth / 2 + langButtonSpacing / 2, currentY)
-        .setStyle(buttonStyle)
+      this.spanishButton.setPosition(width / 2, currentY).setStyle(buttonStyle)
+    }
+
+    // Portuguese Button
+    if (!this.portugueseButton) {
+      this.portugueseButton = this.add
+        .text(width / 2 + langButtonWidth + langButtonSpacing, currentY, 'Português', buttonStyle)
+        .setOrigin(0.5)
+        .setInteractive()
+        .on('pointerdown', () => this.setLanguage('pt'))
+        .on('pointerover', () => this.portugueseButton?.setStyle({ color: '#FFD700' }))
+        .on('pointerout', () => this.portugueseButton?.setStyle({ color: '#00FFFF' }))
+    } else {
+      this.portugueseButton.setPosition(width / 2 + langButtonWidth + langButtonSpacing, currentY).setStyle(buttonStyle)
     }
     currentY += 80 * scaleFactor
 

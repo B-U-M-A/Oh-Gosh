@@ -1,5 +1,6 @@
 import type { LocalizationStrings } from '../types/LocalizationTypes'
 import en from './en'
+import pt from './pt'
 
 export class LocalizationManager {
   private currentLanguage: string = 'en'
@@ -9,6 +10,7 @@ export class LocalizationManager {
   constructor() {
     // Load default English strings
     this.languages['en'] = en
+    this.languages['pt'] = pt
   }
 
   getCurrentLanguage(): string {
