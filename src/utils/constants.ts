@@ -1,27 +1,48 @@
+/**
+ * Player-related constants
+ */
 export const PLAYER = {
-  SPEED: 200, // Base movement speed of the player character
+  /**
+   * Base movement speed of the player character in pixels per second
+   */
+  SPEED: 200,
 }
 
+/**
+ * Texture keys for game assets
+ */
 export const TEXTURE_KEYS = {
   IDLE: 'player_character_idle',
   WALK: 'player_character_walk',
 }
 
+/**
+ * Tile texture keys for world tiles
+ */
 export const TILE_KEYS = {
   GRASS: 'grass_tile',
   DIRT: 'dirt_tile',
   DIRT_PATH: 'dirt_path_tile',
 }
 
+/**
+ * Animation keys for character animations
+ */
 export const ANIMATION_KEYS = {
   PLAYER_IDLE: 'player_idle',
   PLAYER_WALK: 'player_walk',
 }
 
+/**
+ * Audio keys for sound effects
+ */
 export const AUDIO_KEYS = {
   COLLISION: 'collision_sound',
 }
 
+/**
+ * Scene keys for Phaser game scenes
+ */
 export const SCENE_KEYS = {
   PRELOADER: 'PreloaderScene',
   LEVEL1: 'Level1Scene',
@@ -33,26 +54,63 @@ export const SCENE_KEYS = {
   OPTIONS: 'OptionsScene',
 }
 
+/**
+ * Local storage keys for persistent data
+ */
 export const LOCAL_STORAGE_KEYS = {
   HIGH_SCORE: 'becerrita_high_score',
 }
 
-// Add this new export block at the end of the file
+/**
+ * Difficulty settings that scale as the game progresses
+ */
 export const DIFFICULTY = {
-  INITIAL_CHASER_SPEED: 100, // Initial speed of chasers
-  MAX_CHASER_SPEED: 300, // Maximum speed chasers can reach
-  SPEED_INCREASE_AMOUNT: 20, // How much speed increases per interval
-  SPEED_INCREASE_INTERVAL_SCORE: 10, // Score points (seconds survived) after which chaser speed increases
+  /**
+   * Starting movement speed of enemy chasers (pixels per second)
+   */
+  INITIAL_CHASER_SPEED: 100,
+  /**
+   * Maximum possible movement speed of enemy chasers (pixels per second)
+   */
+  MAX_CHASER_SPEED: 300,
+  /**
+   * Amount to increase chaser speed by at each difficulty interval (pixels per second)
+   */
+  SPEED_INCREASE_AMOUNT: 20,
+  /**
+   * Score interval (in seconds survived) that triggers a chaser speed increase
+   */
+  SPEED_INCREASE_INTERVAL_SCORE: 10,
 
-  INITIAL_SPAWN_DELAY: 3000, // Initial delay between chaser spawns (ms)
-  MIN_SPAWN_DELAY: 500, // Minimum delay between chaser spawns (ms)
-  SPAWN_DECREASE_AMOUNT: 100, // How much spawn delay decreases per interval (ms)
-  SPAWN_DECREASE_INTERVAL_SCORE: 15, // Score points (seconds survived) after which spawn delay decreases
+  /**
+   * Initial delay between enemy spawns (milliseconds)
+   */
+  INITIAL_SPAWN_DELAY: 3000,
+  /**
+   * Minimum possible delay between enemy spawns (milliseconds)
+   */
+  MIN_SPAWN_DELAY: 500,
+  /**
+   * Amount to decrease spawn delay by at each difficulty interval (milliseconds)
+   */
+  SPAWN_DECREASE_AMOUNT: 100,
+  /**
+   * Score interval (in seconds survived) that triggers a spawn delay decrease
+   */
+  SPAWN_DECREASE_INTERVAL_SCORE: 15,
 
-  DIFFICULTY_UPDATE_INTERVAL_SCORE: 1, // How often (in score points) to check and update difficulty
+  /**
+   * How frequently (in score points) to check and update difficulty settings
+   */
+  DIFFICULTY_UPDATE_INTERVAL_SCORE: 1,
 }
 
-// New: Win Condition
+/**
+ * Conditions required to win the game
+ */
 export const WIN_CONDITION = {
+  /**
+   * Time player must survive to win (milliseconds)
+   */
   TIME_TO_SURVIVE_MS: 40000, // Survive for 40 seconds to win
 }
