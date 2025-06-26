@@ -2,6 +2,10 @@ import Phaser from 'phaser'
 import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS } from '../utils/constants'
 import { localizationManager } from '../localization/LocalizationManager'
 
+/**
+ * Scene displayed when the player successfully wins the game.
+ * Shows victory message, time survived, and provides options to restart.
+ */
 class WinScene extends Phaser.Scene {
   private score: number = 0
   private winText?: Phaser.GameObjects.Text
@@ -17,8 +21,15 @@ class WinScene extends Phaser.Scene {
     this.score = data.score || 0
   }
 
+  /**
+   * Creates and sets up the win scene UI elements.
+   * - Adds background and text elements
+   * - Displays the time survived
+   * - Sets up restart functionality via button and keyboard input
+   */
   create() {
-    this.cameras.main.setBackgroundColor('#000000') // Ensure black background
+    // Set black background for the win scene
+    this.cameras.main.setBackgroundColor('#000000')
 
     localizationManager.addChangeListener(() => this.updateText())
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
@@ -29,6 +40,7 @@ class WinScene extends Phaser.Scene {
 
     // --- Restart Logic ---
     this.restartButton?.on('pointerdown', this.restartGame, this)
+    // Enable restarting the game with ENTER key
     this.input.keyboard?.on('keydown-ENTER', this.restartGame, this)
 
     // --- Clean up listeners on scene shutdown ---
@@ -61,7 +73,7 @@ class WinScene extends Phaser.Scene {
     const baseHeight = 600
     const scaleFactor = Math.min(width / baseWidth, height / baseHeight)
 
-    // --- 1. Styled "YOU WIN!" Text ---
+    // Add the win title text with gradient and shadow effects
     const winFontSize = Math.max(64, 128 * scaleFactor)
     const winStrings = localizationManager.getStrings().win
     if (!this.winText) {
@@ -106,7 +118,7 @@ class WinScene extends Phaser.Scene {
       this.winText.setText(winStrings.title)
     }
 
-    // --- Display the final score ---
+    // Add text showing the time survived with localization
     const scoreFontSize = Math.max(32, 64 * scaleFactor)
     if (!this.scoreText) {
       this.scoreText = this.add
@@ -125,7 +137,7 @@ class WinScene extends Phaser.Scene {
       this.scoreText.setText(winStrings.timeSurvived.replace('{score}', this.score.toFixed(2))) // Ensure text is updated on resize
     }
 
-    // --- 2. Player Sprite with Idle Animation ---
+    // Add player sprite with idle animation in the center
     const playerScale = 2 * scaleFactor * 2
     if (!this.playerSprite) {
       try {
@@ -144,7 +156,7 @@ class WinScene extends Phaser.Scene {
       this.playerSprite.setPosition(width / 2, height / 2 + 50 * scaleFactor)
     }
 
-    // --- 3. Interactive "Restart" Text with Tween ---
+    // Add interactive restart button with pulsing animation
     const restartFontSize = Math.max(28, 48 * scaleFactor)
     if (!this.restartButton) {
       this.restartButton = this.add
@@ -190,7 +202,8 @@ class WinScene extends Phaser.Scene {
     this.cameras.main.fadeOut(500, 0, 0, 0, (_: Phaser.Cameras.Scene2D.Camera, progress: number) => {
       if (progress === 1) {
         this.scene.stop(SCENE_KEYS.WIN) // Stop the current WinScene
-        this.scene.start(SCENE_KEYS.MAIN_MENU) // Go back to MainMenuScene
+        // Transition back to the main menu scene
+        this.scene.start(SCENE_KEYS.MAIN_MENU)
       }
     })
   }

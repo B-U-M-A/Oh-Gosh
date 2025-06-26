@@ -13,45 +13,55 @@ import { TileGenerator } from '../world/TileGenerator'
 import { EnemyFactory } from '../game/EnemyFactory'
 import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData' // Add this import
 
+/**
+ * The main gameplay scene where the player interacts with the game world, enemies, and collects items.
+ * Handles core game mechanics including:
+ * - Player movement and controls
+ * - Enemy spawning and AI behavior
+ * - World generation and chunk loading
+ * - Difficulty scaling
+ * - Win/lose conditions
+ * - UI elements like score and timer
+ */
 class Level1Scene extends Phaser.Scene {
-  private player?: Phaser.Physics.Arcade.Sprite
-  private chasers?: Phaser.Physics.Arcade.Group
-  private groundLayers?: Phaser.Physics.Arcade.Group // New group for ground layers
-  private wasdCursors?: Phaser.Types.Input.Keyboard.CursorKeys
-  private arrowCursors?: Phaser.Types.Input.Keyboard.CursorKeys
-  private chaserSpawnTimer?: Phaser.Time.TimerEvent
-  private winTimerEvent?: Phaser.Time.TimerEvent // New: Timer for win condition
+  private player?: Phaser.Physics.Arcade.Sprite // The player character sprite
+  private chasers?: Phaser.Physics.Arcade.Group // Group containing all enemy chasers
+  private groundLayers?: Phaser.Physics.Arcade.Group // Group for all ground tile layers
+  private wasdCursors?: Phaser.Types.Input.Keyboard.CursorKeys // WASD keyboard controls
+  private arrowCursors?: Phaser.Types.Input.Keyboard.CursorKeys // Arrow key controls
+  private chaserSpawnTimer?: Phaser.Time.TimerEvent // Timer for spawning new enemies
+  private winTimerEvent?: Phaser.Time.TimerEvent // Timer tracking win condition progress
 
-  private startTime: number = 0
-  private score: number = 0
-  private miniMapCamera?: Phaser.Cameras.Scene2D.Camera
-  private miniMapBorder?: Phaser.GameObjects.Graphics
-  private isGameOver: boolean = false
-  public isMiniMapVisible: boolean = false
+  private startTime: number = 0 // Timestamp when scene was created (for score calculation)
+  private score: number = 0 // Current player score (time survived in seconds)
+  private miniMapCamera?: Phaser.Cameras.Scene2D.Camera // Camera for the mini-map display
+  private miniMapBorder?: Phaser.GameObjects.Graphics // Border around the mini-map
+  private isGameOver: boolean = false // Flag indicating if game has ended
+  public isMiniMapVisible: boolean = false // Controls mini-map visibility
 
-  private tileGenerator?: TileGenerator
-  private readonly TILE_SIZE = 64
-  private readonly CHUNK_SIZE_TILES = 10 // Each chunk will be 10x10 tiles
-  private readonly WORLD_MAX_CHUNKS_X = 10 // Max 10 chunks wide
-  private readonly WORLD_MAX_CHUNKS_Y = 10 // Max 10 chunks high
-  private loadedChunks: Map<string, Phaser.Tilemaps.Tilemap> = new Map()
-  private currentChunkX: number = 0
-  private currentChunkY: number = 0
+  private tileGenerator?: TileGenerator // Handles procedural world generation
+  private readonly TILE_SIZE = 64 // Size of each tile in pixels
+  private readonly CHUNK_SIZE_TILES = 10 // Each chunk is 10x10 tiles
+  private readonly WORLD_MAX_CHUNKS_X = 10 // World width in chunks
+  private readonly WORLD_MAX_CHUNKS_Y = 10 // World height in chunks
+  private loadedChunks: Map<string, Phaser.Tilemaps.Tilemap> = new Map() // Cache of generated chunks
+  private currentChunkX: number = 0 // Player's current chunk X coordinate
+  private currentChunkY: number = 0 // Player's current chunk Y coordinate
 
   // Difficulty scaling properties
-  private currentChaserSpeed: number
-  private currentSpawnDelay: number
-  private lastDifficultyUpdateScore: number = 0
+  private currentChaserSpeed: number // Current speed of chasing enemies
+  private currentSpawnDelay: number // Current delay between enemy spawns
+  private lastDifficultyUpdateScore: number = 0 // Score when difficulty was last updated
 
   // Debug and distance constants
-  private readonly DEBUG_DISTANCE = false // Enable debug logging
-  private readonly MAX_DISTANCE_MULTIPLIER = 1 // 1x window width
+  private readonly DEBUG_DISTANCE = false // Toggles distance debug logging
+  private readonly MAX_DISTANCE_MULTIPLIER = 1 // Max distance enemies can be from player (1x screen width)
 
   // Win condition properties
-  private winTimeRemaining: number
-  private countdownText?: Phaser.GameObjects.Text
-  private progressBar?: Phaser.GameObjects.Graphics
-  private progressBarBackground?: Phaser.GameObjects.Graphics
+  private winTimeRemaining: number // Time remaining to survive (seconds)
+  private countdownText?: Phaser.GameObjects.Text // UI text showing time remaining
+  private progressBar?: Phaser.GameObjects.Graphics // Visual progress bar for time remaining
+  private progressBarBackground?: Phaser.GameObjects.Graphics // Background for progress bar
 
   constructor() {
     super({ key: SCENE_KEYS.LEVEL1 })
@@ -60,8 +70,12 @@ class Level1Scene extends Phaser.Scene {
     this.winTimeRemaining = WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000 // Convert to seconds
   }
 
+  /**
+   * Initializes the game world, player, enemies, UI, and game logic.
+   * Called automatically by Phaser when the scene starts.
+   */
   create(): void {
-    // Play in-game music
+    // Play background music with looping and reduced volume
     this.sound.play(AUDIO_KEYS.IN_GAME_MUSIC, { loop: true, volume: 0.5 })
 
     // Listen for language changes to update UI text
@@ -94,9 +108,9 @@ class Level1Scene extends Phaser.Scene {
       this.player.setScale(1).play(ANIMATION_KEYS.PLAYER_IDLE)
       this.player.setDepth(10) // Ensure player is always on top of the tiles
 
-      // Configure main camera to follow the player
+      // Make camera follow player and set bounds to world dimensions
       this.cameras.main.startFollow(this.player)
-      this.updateWorldBounds() // Set initial camera bounds based on the world size
+      this.updateWorldBounds() // Sets camera bounds to match world size
 
       // Create mini-map camera
       this.miniMapCamera = this.cameras
@@ -178,6 +192,7 @@ class Level1Scene extends Phaser.Scene {
 
     // --- Add keyboard listeners for pausing ---
     this.input.keyboard?.on('keydown-P', this.togglePause, this)
+    // Bind ESC key to pause functionality
     this.input.keyboard?.on('keydown-ESC', this.togglePause, this)
 
     // Add event listener for when the game loses focus (blurs)
@@ -207,6 +222,7 @@ class Level1Scene extends Phaser.Scene {
     })
 
     // Add collider between player and chasers
+    // Set up collision detection between player and enemies
     this.physics.add.collider(this.player!, this.chasers, this.gameOver, undefined, this)
 
     // Chaser spawn timer
@@ -272,12 +288,22 @@ class Level1Scene extends Phaser.Scene {
     })
   }
 
+  /**
+   * Handles game blur event (when window loses focus)
+   * Automatically pauses the game if not already paused
+   */
   private handleGameBlur(): void {
     if (!this.scene.isPaused()) {
       this.togglePause()
     }
   }
 
+  /**
+   * Generates a new world chunk at specified coordinates
+   * @param chunkX - X coordinate of chunk in world space
+   * @param chunkY - Y coordinate of chunk in world space
+   * @returns The generated tilemap for the chunk
+   */
   private generateChunk(chunkX: number, chunkY: number): Phaser.Tilemaps.Tilemap {
     const chunkKey = `${chunkX}_${chunkY}`
     if (this.loadedChunks.has(chunkKey)) {
@@ -338,6 +364,12 @@ class Level1Scene extends Phaser.Scene {
     return map
   }
 
+  /**
+   * Generates chunks around the specified center coordinates
+   * Based on current viewport size to ensure proper loading
+   * @param centerX - Center X coordinate in world space
+   * @param centerY - Center Y coordinate in world space
+   */
   private generateSurroundingChunks(centerX: number, centerY: number): void {
     const chunksNeededX = Math.ceil(this.scale.width / (this.CHUNK_SIZE_TILES * this.TILE_SIZE)) + 2
     const chunksNeededY = Math.ceil(this.scale.height / (this.CHUNK_SIZE_TILES * this.TILE_SIZE)) + 2
@@ -355,6 +387,10 @@ class Level1Scene extends Phaser.Scene {
     this.updateWorldBounds()
   }
 
+  /**
+   * Updates world bounds to match current world dimensions
+   * Ensures physics and camera stay within proper limits
+   */
   private updateWorldBounds(): void {
     const worldWidth = this.WORLD_MAX_CHUNKS_X * this.CHUNK_SIZE_TILES * this.TILE_SIZE
     const worldHeight = this.WORLD_MAX_CHUNKS_Y * this.CHUNK_SIZE_TILES * this.TILE_SIZE
@@ -362,6 +398,10 @@ class Level1Scene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight)
   }
 
+  /**
+   * Toggles game pause state
+   * Handles pausing/resuming timers and showing/hiding pause menu
+   */
   private togglePause(): void {
     if (!this.scene.isPaused()) {
       // Disable keyboard before pausing to prevent input issues on resume
@@ -470,6 +510,15 @@ class Level1Scene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Handles continuous game logic updates.
+   * Called automatically by Phaser every frame.
+   * Manages:
+   * - Player movement and input
+   * - Enemy AI updates
+   * - Score tracking
+   * - World chunk loading
+   */
   update(): void {
     if (!this.player || !this.player.body || !this.wasdCursors || !this.arrowCursors || this.isGameOver) return
 
@@ -516,16 +565,16 @@ class Level1Scene extends Phaser.Scene {
 
     if (left) {
       body.setVelocityX(-playerSpeed)
-      this.player.setFlipX(true) // Flip sprite to face left
+      this.player.setFlipX(true) // Flip sprite to face left when moving left
     } else if (right) {
       body.setVelocityX(playerSpeed)
-      this.player.setFlipX(false) // Face right
+      this.player.setFlipX(false) // Face right when moving right
     }
 
     if (up) {
-      body.setVelocityY(-playerSpeed)
+      body.setVelocityY(-playerSpeed) // Move up
     } else if (down) {
-      body.setVelocityY(playerSpeed)
+      body.setVelocityY(playerSpeed) // Move down
     }
 
     if (body.velocity.x !== 0 && body.velocity.y !== 0) {
@@ -565,6 +614,10 @@ class Level1Scene extends Phaser.Scene {
    * Updates all text elements in the scene based on the current language.
    * This method is called when the language changes via LocalizationManager.
    */
+  /**
+   * Updates all UI text elements based on current language
+   * Called when language changes or text needs refreshing
+   */
   private updateText(): void {
     const level1Strings = localizationManager.getStrings().level1
     if (this.countdownText) {
@@ -572,6 +625,10 @@ class Level1Scene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Updates the win condition countdown timer
+   * Decrements remaining time and checks for win condition
+   */
   private updateCountdown(): void {
     if (this.isGameOver) return // Stop countdown if game is over
 
@@ -584,6 +641,10 @@ class Level1Scene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Updates game difficulty based on player's score
+   * Increases enemy speed and reduces spawn delay progressively
+   */
   private updateDifficulty(): void {
     // Do not update difficulty if the scene is paused
     if (this.scene.isPaused()) {
@@ -638,6 +699,10 @@ class Level1Scene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Handles game over state when player collides with enemy.
+   * Stops gameplay, plays sound effects, and transitions to game over scene.
+   */
   gameOver() {
     // State guard: Ensure this method's logic only runs once
     if (this.isGameOver) {
@@ -704,6 +769,11 @@ class Level1Scene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Handles game window resize events
+   * Adjusts UI elements and camera viewports
+   * @param gameSize - New game dimensions after resize
+   */
   private handleResize(gameSize: Phaser.Structs.Size): void {
     const { width } = gameSize
     if (this.miniMapCamera) {
@@ -729,6 +799,10 @@ class Level1Scene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Updates progress bar visualization based on remaining time
+   * Shows percentage of time survived toward win condition
+   */
   private updateProgressBar(): void {
     if (this.progressBar) {
       const progress = Math.max(0, this.winTimeRemaining / (WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000))

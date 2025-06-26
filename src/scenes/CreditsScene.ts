@@ -2,6 +2,10 @@ import Phaser from 'phaser'
 import { SCENE_KEYS } from '../utils/constants'
 import localization from '../localization/en'
 
+/**
+ * The CreditsScene displays game credits including developers, artists, and game purpose.
+ * It provides a way to return to the main menu via button click or ESC key.
+ */
 class CreditsScene extends Phaser.Scene {
   private titleText?: Phaser.GameObjects.Text
   private purposeText?: Phaser.GameObjects.Text
@@ -15,6 +19,13 @@ class CreditsScene extends Phaser.Scene {
     super({ key: SCENE_KEYS.CREDITS })
   }
 
+  /**
+   * Creates and sets up all UI elements for the credits scene including:
+   * - Title and purpose text
+   * - Developer and artist credits
+   * - Interactive back button
+   * - ESC key listener for returning to main menu
+   */
   create(): void {
     this.cameras.main.setBackgroundColor('#000000')
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
@@ -41,6 +52,7 @@ class CreditsScene extends Phaser.Scene {
     // Title
     const titleFontSize = Math.max(32, 48 * scaleFactor * 1.2)
     if (!this.titleText) {
+      // Add the credits title with styled text
       this.titleText = this.add
         .text(width / 2, 50 * scaleFactor, localization.credits.title, {
           fontSize: titleFontSize + 'px',
@@ -67,6 +79,7 @@ class CreditsScene extends Phaser.Scene {
     // Game Purpose Summary
     const purposeFontSize = Math.max(16, 20 * scaleFactor)
     if (!this.purposeText) {
+      // Add the game purpose description text
       this.purposeText = this.add
         .text(width / 2, 150 * scaleFactor, localization.credits.purpose, {
           fontSize: purposeFontSize + 'px',
@@ -86,6 +99,7 @@ class CreditsScene extends Phaser.Scene {
     const sectionTextFontSize = Math.max(18, 24 * scaleFactor)
 
     if (!this.developersTitle) {
+      // Add the developers section title
       this.developersTitle = this.add
         .text(width / 2, height / 2 + 100 * scaleFactor, localization.credits.developersTitle, {
           fontSize: sectionTitleFontSize + 'px',
@@ -99,6 +113,7 @@ class CreditsScene extends Phaser.Scene {
     }
 
     if (!this.developersText) {
+      // Add the developers list text
       this.developersText = this.add
         .text(width / 2, height / 2 + 150 * scaleFactor, localization.credits.developers, {
           fontSize: sectionTextFontSize + 'px',
@@ -113,6 +128,7 @@ class CreditsScene extends Phaser.Scene {
 
     // Artists Section
     if (!this.artistsTitle) {
+      // Add the artists section title
       this.artistsTitle = this.add
         .text(width / 2, height / 2 + 250 * scaleFactor, localization.credits.artistsTitle, {
           fontSize: sectionTitleFontSize + 'px',
@@ -126,6 +142,7 @@ class CreditsScene extends Phaser.Scene {
     }
 
     if (!this.artistsText) {
+      // Add the artists list text
       this.artistsText = this.add
         .text(width / 2, height / 2 + 300 * scaleFactor, localization.credits.artists, {
           fontSize: sectionTextFontSize + 'px',
@@ -151,11 +168,12 @@ class CreditsScene extends Phaser.Scene {
     }
 
     if (!this.backButton) {
+      // Add interactive back button that returns to main menu when clicked
       this.backButton = this.add
         .text(width / 2, height - 50 * scaleFactor, localization.credits.backButton, buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
-        .on('pointerdown', () => this.scene.start(SCENE_KEYS.MAIN_MENU))
+        .on('pointerdown', () => this.scene.start(SCENE_KEYS.MAIN_MENU)) // Transition back to main menu on click
         .on('pointerover', () => this.backButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.backButton?.setStyle({ color: '#00FFFF' }))
     } else {

@@ -2,6 +2,10 @@ import Phaser from 'phaser'
 import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS, LOCAL_STORAGE_KEYS } from '../utils/constants'
 import { localizationManager } from '../localization/LocalizationManager'
 
+/**
+ * GameOverScene represents the scene displayed when the player loses the game.
+ * It shows the player's score, high score, and provides options to restart the game.
+ */
 class GameOverScene extends Phaser.Scene {
   private score: number = 0
   private gameOverText?: Phaser.GameObjects.Text
@@ -30,17 +34,25 @@ class GameOverScene extends Phaser.Scene {
     this.highScore = currentHighScore // Store the high score for display
   }
 
+  /**
+   * Creates and sets up the game over UI elements including:
+   * - Background and text displays
+   * - Score and high score displays
+   * - Restart game functionality
+   */
   create() {
     this.cameras.main.setBackgroundColor('#000000') // Ensure black background
 
+    // Add listeners for localization changes and screen resizing
     localizationManager.addChangeListener(() => this.updateText())
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
-    // Initial layout
+    // Initial layout setup
     this.updateText()
     this.handleResize(this.scale.gameSize)
 
     // --- Restart Logic ---
+    // Set up restart game controls - both mouse click and keyboard
     this.restartButton?.on('pointerdown', this.restartGame, this)
     this.input.keyboard?.on('keydown-ENTER', this.restartGame, this)
 
@@ -62,7 +74,10 @@ class GameOverScene extends Phaser.Scene {
    * This method is called when the language changes via LocalizationManager.
    */
   private updateText(): void {
+    // Get localized strings for game over screen
     const gameOverStrings = localizationManager.getStrings().gameOver
+    
+    // Update all text elements with localized strings and current scores
     this.gameOverText?.setText(gameOverStrings.title)
     this.scoreText?.setText(gameOverStrings.yourScore.replace('{score}', this.score.toFixed(2)))
     this.highScoreText?.setText(gameOverStrings.highScore.replace('{score}', this.highScore.toFixed(2)))
@@ -80,6 +95,7 @@ class GameOverScene extends Phaser.Scene {
     const gameOverFontSize = Math.max(64, 128 * scaleFactor)
     const gameOverStrings = localizationManager.getStrings().gameOver
     if (!this.gameOverText) {
+      // Create and style the "Game Over" title text with gradient and shadow effects
       this.gameOverText = this.add
         .text(width / 2, 150 * scaleFactor, gameOverStrings.title, {
           fontFamily: 'Staatliches',
@@ -124,6 +140,7 @@ class GameOverScene extends Phaser.Scene {
     // --- Display the final score ---
     const scoreFontSize = Math.max(32, 64 * scaleFactor)
     if (!this.scoreText) {
+      // Create the score display text showing the player's final score
       this.scoreText = this.add
         .text(width / 2, 250 * scaleFactor, gameOverStrings.yourScore.replace('{score}', this.score.toFixed(2)), {
           fontFamily: 'Staatliches',
@@ -142,6 +159,7 @@ class GameOverScene extends Phaser.Scene {
 
     const highScoreFontSize = Math.max(28, 56 * scaleFactor) // Slightly smaller than current score, but prominent
     if (!this.highScoreText) {
+      // Create the high score display text showing the best score
       this.highScoreText = this.add
         .text(width / 2, 320 * scaleFactor, gameOverStrings.highScore.replace('{score}', this.highScore.toFixed(2)), {
           fontFamily: 'Staatliches',
@@ -180,6 +198,7 @@ class GameOverScene extends Phaser.Scene {
     // --- 3. Interactive "Restart" Text with Tween ---
     const restartFontSize = Math.max(28, 48 * scaleFactor)
     if (!this.restartButton) {
+      // Create the interactive restart button with pulsing animation
       this.restartButton = this.add
         .text(width / 2, height - 80 * scaleFactor, gameOverStrings.restartPrompt, {
           fontFamily: 'Staatliches',

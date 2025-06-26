@@ -3,6 +3,13 @@ import { SCENE_KEYS } from '../utils/constants'
 import { localizationManager } from '../localization/LocalizationManager'
 import Level1Scene from './Level1Scene'
 
+/**
+ * The pause scene displayed when the game is paused, providing options to:
+ * - Resume the game
+ * - Adjust volume
+ * - Toggle minimap visibility
+ * - Return to main menu
+ */
 class PauseScene extends Phaser.Scene {
   private pausedText?: Phaser.GameObjects.Text
   private resumeButton?: Phaser.GameObjects.Text
@@ -19,34 +26,54 @@ class PauseScene extends Phaser.Scene {
     super({ key: SCENE_KEYS.PAUSE })
   }
 
+  /**
+   * Sets up the pause menu UI including:
+   * - Background overlay
+   * - Title text
+   * - Interactive buttons (resume, back to menu)
+   * - Volume control slider
+   * - Minimap toggle button
+   * - Event listeners for keyboard and UI interactions
+   */
   create() {
     // Listen for language changes to update UI text
     localizationManager.addChangeListener(() => this.updateText())
 
-    // Add resize event listener
+    // Add resize event listener to handle window resizing
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
-    // Initial layout
-    // Create all UI elements
+    // Create all UI elements for the pause menu
+    // Add semi-transparent background overlay for the pause menu
     this.backgroundRect = this.add.rectangle(0, 0, 1, 1, 0x000000, 0.7).setOrigin(0.5)
+
+    // Add the "Paused" title text (text content will be set by updateText())
     this.pausedText = this.add
       .text(0, 0, '', {
-        // Initial text will be set by updateText()
         fontFamily: 'Staatliches',
         fontSize: '1px',
-        color: '#FFD700',
-        stroke: '#8A2BE2',
+        color: '#FFD700', // Gold color
+        stroke: '#8A2BE2', // Blue Violet outline
         strokeThickness: 1,
       })
       .setOrigin(0.5)
+    // Add "Resume" button with interactive hover effects
     this.resumeButton = this.add
-      .text(0, 0, '', { fontSize: '1px', color: '#00FFFF', backgroundColor: '#8A2BE2', padding: { x: 1, y: 1 } }) // Initial text will be set by updateText()
+      .text(0, 0, '', {
+        fontSize: '1px',
+        color: '#00FFFF', // Cyan color
+        backgroundColor: '#8A2BE2', // Blue Violet background
+        padding: { x: 1, y: 1 }
+      })
       .setOrigin(0.5)
-      .setInteractive()
-      .on('pointerdown', this.resumeGame, this)
-      .on('pointerover', () => this.resumeButton?.setStyle({ color: '#FFD700' }))
-      .on('pointerout', () => this.resumeButton?.setStyle({ color: '#00FFFF' }))
-    this.volumeLabel = this.add.text(0, 0, '', { fontSize: '1px', color: '#FFFFFF' }).setOrigin(0.5) // Initial text will be set by updateText()
+      .setInteractive() // Make the text clickable
+      .on('pointerdown', this.resumeGame, this) // Resume game when clicked
+      .on('pointerover', () => this.resumeButton?.setStyle({ color: '#FFD700' })) // Gold on hover
+      .on('pointerout', () => this.resumeButton?.setStyle({ color: '#00FFFF' })) // Cyan on mouse out
+    // Add volume label (text content will be set by updateText())
+    this.volumeLabel = this.add.text(0, 0, '', {
+      fontSize: '1px',
+      color: '#FFFFFF' // White color
+    }).setOrigin(0.5)
     this.volumeBar = this.add.graphics()
     this.volumeHandle = this.add.rectangle(0, 0, 1, 1, 0xffffff).setInteractive({ draggable: true })
     this.input.on('drag', (_: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
@@ -96,6 +123,7 @@ class PauseScene extends Phaser.Scene {
 
     // --- Keyboard listener to resume the game ---
     this.input.keyboard?.on('keydown-P', this.resumeGame, this)
+    // Enable resuming the game with ESC key
     this.input.keyboard?.on('keydown-ESC', this.resumeGame, this)
 
     // --- Clean up listeners and objects on scene shutdown ---
@@ -349,6 +377,7 @@ class PauseScene extends Phaser.Scene {
       this.scene.stop(SCENE_KEYS.LEVEL1)
     }
     this.scene.stop(SCENE_KEYS.PAUSE)
+    // Transition back to the main menu scene
     this.scene.start(SCENE_KEYS.MAIN_MENU)
   }
 }

@@ -1,8 +1,26 @@
-# Oh Gosh
 
-Oh Gosh is an arcade-style, single-player, browser-based video game where players control the character "Juan Becerra" with the objective of escaping from multiple pursuing entities referred to as "C"s. Featuring a distinct pixel art aesthetic, the game focuses on evasion and survival, offering an engaging and challenging experience directly within your web browser.
+<h1 align="center">
+  <br>
+  <a href="https://github.com/B-U-M-A/Oh-Gosh/"><img src="https://media.discordapp.net/attachments/1019375030771134565/1387645538798796850/image0.png?ex=685e191d&is=685cc79d&hm=2368d9066fd9aea1149defbb4e28e91abb4ae4f84781129c2075a57224670b3f&=&format=webp&quality=lossless&width=983&height=983" alt="Markdownify" width="200"></a>
+  <br>
+  Oh-Gosh
+  <br>
+</h1>
 
-## ✨ Features
+<h4 align="center">An arcade-style, single-player, browser-based video game where players control the character "Juan Becerra"</h4>
+
+<p align="center">
+  <a href="#key-features">Key Features</a> •
+  <a href="#how-to-use">How To Use</a> •
+  <a href="#download">Download</a> •
+  <a href="#credits">Credits</a> •
+  <a href="#related">Related</a> •
+  <a href="#license">License</a>
+</p>
+
+![screenshot](https://cdn.discordapp.com/attachments/1019375030771134565/1387648250277793792/image.png?ex=685e1ba4&is=685cca24&hm=763784d7678eb025dc2816246db839b29b46857c587a097eded9f65681660c23&)
+
+## Key Features
 
 - **Intuitive Player Control:** Move Juan Becerra horizontally and vertically with keyboard (WASD/Arrow Keys) on desktop or an on-screen virtual joystick on mobile.
 - **Dynamic Enemy AI:** "C" enemies continuously pursue Juan Becerra, with their speed and numbers increasing over time for escalating challenge.
@@ -13,31 +31,34 @@ Oh Gosh is an arcade-style, single-player, browser-based video game where player
 - **In-game Tutorial:** A brief, non-intrusive tutorial explains controls and objectives upon first launch.
 - **Pause Functionality:** Temporarily halt and resume gameplay with a dedicated input, displaying a "Game Paused" overlay.
 
+## 🎮 How to Play
+
+The objective is simple: **evade the "C"s for as long as possible!**
+
+- **Movement (Desktop):** Use the `W`, `A`, `S`, `D` keys or the `Arrow Keys` to move Juan Becerra.
+- **Movement (Mobile):** Use the on-screen virtual joystick located in the bottom-left corner. TODO
+- **Pause Game:** Press the `P` key (desktop) or click the designated pause button (if available on UI) during gameplay.
+
+Survive longer to achieve a higher score!
+
+## Download
+
 ## 🚀 Technologies Used
 
 - **JavaScript:** The core programming language for the game logic.
 - **Phaser.io:** A powerful, open-source HTML5 game framework (version 3.55.2 or later) for building browser-based games.
 - **HTML5 Canvas & WebGL:** Utilized by Phaser.io for rendering game elements.
 
-## 🎮 How to Play
-
-The objective is simple: **evade the "C"s for as long as possible!**
-
-- **Movement (Desktop):** Use the `W`, `A`, `S`, `D` keys or the `Arrow Keys` to move Juan Becerra.
-- **Movement (Mobile):** Use the on-screen virtual joystick located in the bottom-left corner.
-- **Pause Game:** Press the `P` key (desktop) or click the designated pause button (if available on UI) during gameplay.
-
-Survive longer to achieve a higher score!
 
 ## 📦 Installation & Setup (For Local Development)
 
-To run "Juan Becerra's Escape Game" locally:
+To run "Oh-Gosh" locally:
 
 1.  **Clone the repository:**
 
     ```bash
-    git clone [repository-url]
-    cd juan-becerra-escape-game
+    git clone https://github.com/B-U-M-A/Oh-Gosh.git
+    cd Oh-Gosh
     ```
 
     (Replace `[repository-url]` with the actual URL of the game's repository.)
@@ -51,24 +72,9 @@ To run "Juan Becerra's Escape Game" locally:
     yarn install
     ```
 
-3.  **Start a local server:**
-    Since this is a browser-based game, you'll need a local web server to serve the HTML, JavaScript, and assets. You can use tools like `http-server` (Node.js) or Python's built-in server:
 
-    - **Using `http-server` (Node.js):**
-      ```bash
-      npm install -g http-server
-      http-server .
-      ```
-    - **Using Python 3:**
-      ```bash
-      python -m http.server
-      ```
-
-4.  **Open in browser:**
-    After starting the server, open your web browser and navigate to `http://localhost:8080` (or the port indicated by your server).
-
-## 🤝 Credits / Acknowledgements
+## Credits
 
 - **Concept & Game Design:** Juan Becerra
 - **Game Framework:** [Phaser.io](https://phaser.io/)
-- **Inspiration:** Classic arcade evasion games.
+- **Inspiration:** Classic arcade bullet hell games.

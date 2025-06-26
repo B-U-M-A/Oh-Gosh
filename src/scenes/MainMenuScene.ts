@@ -2,6 +2,14 @@ import Phaser from 'phaser'
 import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS } from '../utils/constants'
 import { localizationManager } from '../localization/LocalizationManager'
 
+/**
+ * The main menu scene of the game where players can:
+ * - Start the game (fast play or select level)
+ * - View credits
+ * - Access options
+ *
+ * Handles UI setup, button interactions, and keyboard navigation.
+ */
 class MainMenuScene extends Phaser.Scene {
   private player?: Phaser.GameObjects.Sprite
   private titleText?: Phaser.GameObjects.Text
@@ -22,11 +30,20 @@ class MainMenuScene extends Phaser.Scene {
     this.updateTextBound = this.updateText.bind(this) // Bind once for consistent reference
   }
 
+  /**
+   * Sets up the main menu UI elements including:
+   * - Background
+   * - Title text
+   * - Interactive buttons
+   * - Keyboard event listeners
+   */
   create(): void {
-    this.cameras.main.setBackgroundColor('#000000') // Ensure black background
+    // Set black background for the menu
+    this.cameras.main.setBackgroundColor('#000000')
 
+    // Setup keyboard controls for menu navigation
     this.keyboardCursors = this.input.keyboard?.createCursorKeys()
-    this.enterKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER) // Add this line
+    this.enterKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)
 
     // Listen for language changes to update UI text
     localizationManager.addChangeListener(this.updateTextBound)
@@ -48,7 +65,7 @@ class MainMenuScene extends Phaser.Scene {
     const buttonsWidth = 200 * scaleFactor
     const maxTitleWidth = this.scale.width * 0.5 - minTitleButtonGap - buttonsWidth
 
-    // Oh-Gosh Title next to player
+    // Add the game title text next to the player character
     let titleFontSize = Math.max(32, 64 * scaleFactor * 1.5) // Start with base size
     this.titleText = this.add
       .text(
@@ -113,14 +130,15 @@ class MainMenuScene extends Phaser.Scene {
       firstButtonCenterY = minPadding + estimatedButtonHeight / 2
     }
 
+    // Add 'Fast Play' button and set it interactive to start Level 1
     this.fastPlayButton = this.add
       .text(
         this.scale.width - buttonXOffset,
         firstButtonCenterY,
         localizationManager.getStrings().mainMenu.fastPlay,
-        baseButtonStyle, // Pass the base style here
+        baseButtonStyle
       )
-      .setOrigin(1, 0.5) // Align right of text with buttonX, center vertically
+      .setOrigin(1, 0.5)
       .setInteractive()
       .on('pointerdown', () => this.scene.start(SCENE_KEYS.LEVEL1))
       .on('pointerover', () => {
@@ -147,12 +165,13 @@ class MainMenuScene extends Phaser.Scene {
         this.updateSelectionVisuals()
       })
 
+    // Add 'Credits' button and set it interactive to show the Credits scene
     this.creditsButton = this.add
       .text(
         this.scale.width - buttonXOffset,
         firstButtonCenterY + buttonSpacing * 2,
         localizationManager.getStrings().mainMenu.credits,
-        baseButtonStyle, // Pass the base style here
+        baseButtonStyle
       )
       .setOrigin(1, 0.5)
       .setInteractive()
@@ -164,12 +183,13 @@ class MainMenuScene extends Phaser.Scene {
         this.updateSelectionVisuals()
       })
 
+    // Add 'Options' button and set it interactive to show the Options scene
     this.optionsButton = this.add
       .text(
         this.scale.width - buttonXOffset,
         firstButtonCenterY + buttonSpacing * 3,
         localizationManager.getStrings().mainMenu.options,
-        baseButtonStyle, // Pass the base style here
+        baseButtonStyle
       )
       .setOrigin(1, 0.5)
       .setInteractive()
@@ -196,7 +216,7 @@ class MainMenuScene extends Phaser.Scene {
     this.handleResize(this.scale.gameSize)
     this.updateSelectionVisuals() // Apply initial selection highlight
 
-    // --- Clean up listeners on scene shutdown ---
+    // Clean up event listeners when the scene shuts down
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
       localizationManager.removeChangeListener(this.updateTextBound)
