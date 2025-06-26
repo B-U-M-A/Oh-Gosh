@@ -478,6 +478,7 @@ class Level1Scene extends Phaser.Scene {
           this.physics.moveToObject(chaser, this.player, this.currentChaserSpeed)
         }
       }
+      return true // Continue iteration
     })
   }
 
@@ -523,6 +524,7 @@ class Level1Scene extends Phaser.Scene {
         if (chaser instanceof Phaser.Physics.Arcade.Sprite && this.player) {
           this.physics.moveToObject(chaser, this.player, this.currentChaserSpeed)
         }
+        return true // Continue iteration
       })
       console.log(`Difficulty: Chaser speed increased to ${this.currentChaserSpeed.toFixed(0)}`)
     }

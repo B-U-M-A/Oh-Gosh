@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS, LOCAL_STORAGE_KEYS } from '../utils/constants'
+import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS } from '../utils/constants'
 
 class WinScene extends Phaser.Scene {
   private score: number = 0
