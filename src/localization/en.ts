@@ -1,4 +1,14 @@
+// src/localization/en.ts
+
 export default {
+  common: {
+    backButton: 'Back to Main Menu',
+    toggleMinimap: 'Minimap:',
+    minimapState: {
+      on: 'ON',
+      off: 'OFF',
+    },
+  },
   mainMenu: {
     title: 'Oh-Gosh',
     fastPlay: 'Fast Play',
@@ -10,11 +20,6 @@ export default {
     title: 'PAUSED',
     resume: 'Resume',
     volume: 'Volume',
-    toggleMinimap: 'Toggle Minimap:',
-    minimapState: {
-      on: 'ON',
-      off: 'OFF',
-    },
     backToMenu: 'Back to Main Menu',
   },
   credits: {
@@ -25,7 +30,6 @@ export default {
     developers: 'jspenaq\nElComeBabillas',
     artistsTitle: 'Artists',
     artists: 'Elsapateiro',
-    backButton: 'Back to Main Menu',
   },
   gameOver: {
     title: 'GAME OVER',
@@ -46,11 +50,5 @@ export default {
   },
   level1: {
     survive: 'Survive: {time}s',
-    toggleMinimap: 'Toggle Minimap:',
-    minimapState: {
-      on: 'ON',
-      off: 'OFF',
-    },
-    backButton: 'Back to Main Menu',
   },
 }

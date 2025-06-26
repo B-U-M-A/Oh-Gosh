@@ -1,8 +1,16 @@
+// src/types/LocalizationTypes.ts
+
 /**
  * Defines the structure for all localizable strings used in the game.
  * Each property represents a different game section with its own set of strings.
  */
 export interface LocalizationStrings {
+  /** Common strings used across multiple scenes */
+  common: {
+    backButton: string
+    toggleMinimap: string
+    minimapState: { on: string; off: string }
+  }
   /** Strings used in the main menu screen */
   mainMenu: {
     title: string
@@ -16,11 +24,6 @@ export interface LocalizationStrings {
     title: string
     resume: string
     volume: string
-    toggleMinimap: string
-    minimapState: {
-      on: string
-      off: string
-    }
     backToMenu: string
   }
   /** Strings used in the credits screen */
@@ -31,7 +34,6 @@ export interface LocalizationStrings {
     developers: string
     artistsTitle: string
     artists: string
-    backButton: string
   }
   /** Strings used in the game over screen */
   gameOver: {
@@ -52,20 +54,8 @@ export interface LocalizationStrings {
     title: string
     language: string
     volume: string
-    toggleMinimap: string
-    minimapState: {
-      on: string
-      off: string
-    }
-    backButton: string
   }
   level1: {
     survive: string
-    toggleMinimap: string
-    minimapState: {
-      on: string
-      off: string
-    }
-    backButton: string
   }
 }

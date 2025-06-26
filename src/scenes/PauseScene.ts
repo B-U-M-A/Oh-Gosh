@@ -1,7 +1,10 @@
+// src/scenes/PauseScene.ts
+
 import Phaser from 'phaser'
 import { SCENE_KEYS } from '../utils/constants'
 import { localizationManager } from '../localization/LocalizationManager'
-import Level1Scene from './Level1Scene'
+// Import LevelScene base class for type safety
+import { LevelScene } from './LevelScene' // ADDED/MODIFIED IMPORT
 
 /**
  * The pause scene displayed when the game is paused, providing options to:
@@ -22,8 +25,20 @@ class PauseScene extends Phaser.Scene {
   private volumeHandle?: Phaser.GameObjects.Rectangle
   private toggleMinimapButton?: Phaser.GameObjects.Text
 
+  // ADDED PROPERTY: Reference to the LevelScene that launched this pause menu
+  private parentLevelScene?: LevelScene
+  // ADDED PROPERTY: Bound callback for localization changes
+  private localizationUpdateCallback: () => void
+
   constructor() {
     super({ key: SCENE_KEYS.PAUSE })
+    // Bind the updateText method to this instance for use as a callback
+    this.localizationUpdateCallback = () => this.updateText()
+  }
+
+  // ADDED METHOD: To receive the parent scene reference
+  init(data: { parentScene: LevelScene }) {
+    this.parentLevelScene = data.parentScene
   }
 
   /**
@@ -37,7 +52,7 @@ class PauseScene extends Phaser.Scene {
    */
   create() {
     // Listen for language changes to update UI text
-    localizationManager.addChangeListener(() => this.updateText())
+    localizationManager.addChangeListener(this.localizationUpdateCallback) // MODIFIED: USE BOUND CALLBACK
 
     // Add resize event listener to handle window resizing
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
@@ -101,8 +116,8 @@ class PauseScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive()
       .on('pointerdown', () => {
-        const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
-        level1Scene.toggleMiniMap()
+        // MODIFIED: Use parentLevelScene instead of directly getting Level1Scene
+        this.parentLevelScene?.toggleMiniMap()
         this.updateText() // Update text after toggling minimap
       })
       .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
@@ -131,7 +146,7 @@ class PauseScene extends Phaser.Scene {
     // --- Clean up listeners and objects on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this) // Remove resize listener
-      localizationManager.removeChangeListener(() => this.updateText()) // Remove language change listener
+      localizationManager.removeChangeListener(this.localizationUpdateCallback) // MODIFIED: USE BOUND CALLBACK
       this.input.keyboard?.off('keydown-P', this.resumeGame, this)
       this.input.keyboard?.off('keydown-ESC', this.resumeGame, this)
       this.input.off('drag') // Clean up drag listener
@@ -154,6 +169,7 @@ class PauseScene extends Phaser.Scene {
       this.volumeBar = undefined
       this.volumeHandle = undefined
       this.toggleMinimapButton = undefined
+      this.parentLevelScene = undefined // ADDED: NULLIFY REFERENCE
     })
   }
 
@@ -164,6 +180,9 @@ class PauseScene extends Phaser.Scene {
     const baseHeight = 600
     const scaleFactor = Math.min(width / baseWidth, height / baseHeight)
 
+    const pauseStrings = localizationManager.getStrings().pause
+    const commonStrings = localizationManager.getStrings().common // ADDED: Get common strings
+
     // --- Create a semi-transparent background overlay ---
     if (!this.backgroundRect) {
       this.backgroundRect = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7).setOrigin(0.5)
@@ -172,7 +191,6 @@ class PauseScene extends Phaser.Scene {
 
     // --- "Paused" Text ---
     const pausedFontSize = Math.max(48, 96 * scaleFactor)
-    const pauseStrings = localizationManager.getStrings().pause
     if (!this.pausedText) {
       this.pausedText = this.add
         .text(width / 2, height * 0.2, pauseStrings.title, {
@@ -187,7 +205,7 @@ class PauseScene extends Phaser.Scene {
     this.pausedText.setFontSize(`${pausedFontSize}px`)
     this.pausedText.setStroke('#8A2BE2', 6 * scaleFactor)
     this.pausedText.setPosition(width / 2, height * 0.2)
-    this.pausedText.setText(pauseStrings.title)
+    this.pausedText.setText(pauseStrings.title) // Update text on resize
 
     // --- UI Elements Styling ---
     const buttonFontSize = Math.max(20, 28 * scaleFactor)
@@ -216,7 +234,7 @@ class PauseScene extends Phaser.Scene {
         .on('pointerout', () => this.resumeButton?.setStyle({ color: '#00FFFF' }))
     }
     this.resumeButton.setPosition(width / 2, height * 0.4).setStyle(buttonStyle)
-    this.resumeButton.setText(pauseStrings.resume)
+    this.resumeButton.setText(pauseStrings.resume) // Update text on resize
 
     // --- Volume Control ---
     const volumeBarWidth = 300 * scaleFactor
@@ -265,25 +283,28 @@ class PauseScene extends Phaser.Scene {
     this.volumeHandle.setPosition(handleX, volumeYPos).setSize(handleSize, handleSize)
 
     // --- Toggle Minimap Button ---
-    const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
+    // MODIFIED: Use parentLevelScene instead of directly getting Level1Scene
+    const levelScene = this.parentLevelScene
     const minimapButtonYPos = height * 0.7
 
     if (!this.toggleMinimapButton) {
-      const minimapState = level1Scene.isMiniMapVisible ? pauseStrings.minimapState.on : pauseStrings.minimapState.off
-      const initialText = `${pauseStrings.toggleMinimap} ${minimapState}`
+      // MODIFIED: Use commonStrings for minimap text
+      const minimapState = levelScene?.isMiniMapVisible ? commonStrings.minimapState.on : commonStrings.minimapState.off
+      const initialText = `${commonStrings.toggleMinimap} ${minimapState}`
       this.toggleMinimapButton = this.add
         .text(width / 2, minimapButtonYPos, initialText, buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', () => {
-          level1Scene.toggleMiniMap()
+          levelScene?.toggleMiniMap() // MODIFIED: Use levelScene
           this.updateText() // Update text after toggling minimap
         })
         .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.toggleMinimapButton?.setStyle({ color: '#00FFFF' }))
     }
-    const minimapState = level1Scene.isMiniMapVisible ? pauseStrings.minimapState.on : pauseStrings.minimapState.off
-    this.toggleMinimapButton.setText(`${pauseStrings.toggleMinimap} ${minimapState}`)
+    // MODIFIED: Use commonStrings for minimap text
+    const minimapState = levelScene?.isMiniMapVisible ? commonStrings.minimapState.on : commonStrings.minimapState.off
+    this.toggleMinimapButton.setText(`${commonStrings.toggleMinimap} ${minimapState}`)
     this.toggleMinimapButton.setPosition(width / 2, minimapButtonYPos).setStyle(buttonStyle)
 
     // --- Back to Main Menu Button ---
@@ -308,15 +329,19 @@ class PauseScene extends Phaser.Scene {
    */
   private updateText(): void {
     const pauseStrings = localizationManager.getStrings().pause
+    const commonStrings = localizationManager.getStrings().common // ADDED: Get common strings
+
     this.pausedText?.setText(pauseStrings.title)
     this.resumeButton?.setText(pauseStrings.resume)
     this.volumeLabel?.setText(pauseStrings.volume)
     this.backToMenuButton?.setText(pauseStrings.backToMenu)
 
-    const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
-    if (level1Scene) {
-      const minimapState = level1Scene.isMiniMapVisible ? pauseStrings.minimapState.on : pauseStrings.minimapState.off
-      this.toggleMinimapButton?.setText(`${pauseStrings.toggleMinimap} ${minimapState}`)
+    // MODIFIED: Use parentLevelScene instead of directly getting Level1Scene
+    const levelScene = this.parentLevelScene
+    if (levelScene) {
+      // MODIFIED: Use commonStrings for minimap text
+      const minimapState = levelScene.isMiniMapVisible ? commonStrings.minimapState.on : commonStrings.minimapState.off
+      this.toggleMinimapButton?.setText(`${commonStrings.toggleMinimap} ${minimapState}`)
     }
   }
 
@@ -327,33 +352,33 @@ class PauseScene extends Phaser.Scene {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
     this.input.off('drag') // Clean up drag listener
 
-    // --- Get a reference to Level1Scene ---
-    const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
+    // MODIFIED: Use parentLevelScene instead of directly getting Level1Scene
+    const levelScene = this.parentLevelScene
 
-    if (level1Scene) {
-      // Temporarily disable keyboard input in Level1Scene
+    if (levelScene) {
+      // Temporarily disable keyboard input in LevelScene
       // This prevents the 'P' or 'ESC' key, if still held down, from immediately re-pausing the game.
-      if (level1Scene.input.keyboard) {
-        level1Scene.input.keyboard.enabled = false
+      if (levelScene.input.keyboard) {
+        levelScene.input.keyboard.enabled = false
       }
 
       // Resume the main game scene
-      this.scene.resume(SCENE_KEYS.LEVEL1)
+      this.scene.resume(levelScene.scene.key) // MODIFIED: Resume the parent scene's key
 
-      // Re-enable keyboard input in Level1Scene after a short delay (e.g., 200ms)
+      // Re-enable keyboard input in LevelScene after a short delay (e.g., 200ms)
       // This gives the user time to release the pause key.
       this.time.delayedCall(
         200,
         () => {
-          if (level1Scene.input.keyboard) {
-            level1Scene.input.keyboard.enabled = true
+          if (levelScene.input.keyboard) {
+            levelScene.input.keyboard.enabled = true
           }
         },
         [],
         this,
       )
     } else {
-      console.error(`Level1 scene key not found: ${SCENE_KEYS.LEVEL1}. Cannot resume game.`)
+      console.error(`Parent Level scene not found. Cannot resume game.`)
     }
 
     // Stop this pause scene
@@ -367,9 +392,9 @@ class PauseScene extends Phaser.Scene {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
     this.input.off('drag') // Clean up drag listener
 
-    // Stop Level1Scene and PauseScene, then start MainMenuScene
-    if (this.scene.manager.keys[SCENE_KEYS.LEVEL1]) {
-      this.scene.stop(SCENE_KEYS.LEVEL1)
+    // MODIFIED: Stop the parent scene if it exists
+    if (this.parentLevelScene && this.scene.manager.keys[this.parentLevelScene.scene.key]) {
+      this.scene.stop(this.parentLevelScene.scene.key)
     }
     this.scene.stop(SCENE_KEYS.PAUSE)
     // Transition back to the main menu scene

@@ -1,5 +1,8 @@
+// src/scenes/LevelSelectorScene.ts
+
 import Phaser from 'phaser'
 import { SCENE_KEYS, AUDIO_KEYS } from '../utils/constants'
+import { localizationManager } from '../localization/LocalizationManager' // ADDED IMPORT
 
 interface LevelData {
   id: string
@@ -22,8 +25,13 @@ class LevelSelectorScene extends Phaser.Scene {
   private levelButtons: Phaser.GameObjects.Text[] = []
   private backButton?: Phaser.GameObjects.Text
 
+  // ADDED PROPERTY: Bound callback for localization changes
+  private localizationUpdateCallback: () => void
+
   constructor() {
     super({ key: SCENE_KEYS.LEVEL_SELECTOR })
+    // ADDED: Bind the updateText method to this instance for use as a callback
+    this.localizationUpdateCallback = () => this.updateText()
   }
 
   init(data: { levels?: LevelData[] }) {
@@ -43,18 +51,18 @@ class LevelSelectorScene extends Phaser.Scene {
         },
       },
       {
-        id: 'Level2Scene',
+        id: SCENE_KEYS.LEVEL2, // MODIFIED: Use SCENE_KEYS.LEVEL2 for consistency
         name: 'Level 2 (Tilemap)',
         config: {
           levelType: 'tilemap',
           tilemapKey: 'world',
           tilemapJson: 'assets/tilemap/oh-gosh-map.tmj',
           musicKey: AUDIO_KEYS.IN_GAME_MUSIC,
-          timeToSurviveMs: 40000,
+          timeToSurviveMs: 60000, // MODIFIED: Corrected value
           levelWidthChunks: 0, // Not used for tilemap
           levelHeightChunks: 0, // Not used for tilemap
-          initialDifficulty: 1,
-          enemySpawnRate: 3,
+          initialDifficulty: 2, // MODIFIED: Corrected value
+          enemySpawnRate: 5, // MODIFIED: Corrected value
         },
       },
     ]
@@ -66,6 +74,17 @@ class LevelSelectorScene extends Phaser.Scene {
     this.createLevelButtons()
     this.createBackButton()
     this.setupEventListeners()
+
+    // ADDED: Listen for language changes to update UI text
+    localizationManager.addChangeListener(this.localizationUpdateCallback)
+    this.updateText() // ADDED: Initial text update
+
+    // ADDED: Clean up listeners on scene shutdown
+    this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      localizationManager.removeChangeListener(this.localizationUpdateCallback)
+      this.levelButtons = []
+      this.backButton = undefined
+    })
   }
 
   private addBackground() {
@@ -75,6 +94,7 @@ class LevelSelectorScene extends Phaser.Scene {
   private addTitle() {
     this.add
       .text(this.scale.width / 2, 50, 'Select Level', {
+        // This title is not localized, consider adding it to localization
         fontFamily: 'Staatliches',
         fontSize: '48px',
         color: '#ffffff',
@@ -113,7 +133,8 @@ class LevelSelectorScene extends Phaser.Scene {
 
   private createBackButton() {
     this.backButton = this.add
-      .text(50, this.scale.height - 50, 'Back', {
+      .text(50, this.scale.height - 50, localizationManager.getStrings().common.backButton, {
+        // MODIFIED: Use common.backButton
         fontFamily: 'Staatliches',
         fontSize: '32px',
         color: '#ffffff',
@@ -138,6 +159,14 @@ class LevelSelectorScene extends Phaser.Scene {
       this.scene.start(SCENE_KEYS.MAIN_MENU)
     })
   }
+
+  // ADDED METHOD: Updates all text elements in the scene based on the current language.
+  private updateText(): void {
+    const commonStrings = localizationManager.getStrings().common
+    this.backButton?.setText(commonStrings.backButton)
+    // If 'Select Level' title needs localization, add it here too.
+  }
 }
+
 
 export default LevelSelectorScene

@@ -1,3 +1,5 @@
+// src/scenes/LevelScene.ts
+
 import Phaser from 'phaser'
 import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS, PLAYER } from '../utils/constants'
 import { localizationManager } from '../localization/LocalizationManager'
@@ -495,7 +497,8 @@ export abstract class LevelScene extends Phaser.Scene {
 
       // Attempt to launch the PauseScene
       if (this.scene.manager.keys[SCENE_KEYS.PAUSE]) {
-        this.scene.launch(SCENE_KEYS.PAUSE)
+        // Pass a reference to this LevelScene instance to the PauseScene
+        this.scene.launch(SCENE_KEYS.PAUSE, { parentScene: this }) // MODIFIED LINE
       } else {
         // Fallback if PauseScene is not found (e.g., development error)
         console.error(`Pause scene key not found: ${SCENE_KEYS.PAUSE}`)
