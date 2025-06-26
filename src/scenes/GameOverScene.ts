@@ -126,13 +126,18 @@ class GameOverScene extends Phaser.Scene {
     const highScoreFontSize = Math.max(28, 56 * scaleFactor) // Slightly smaller than current score, but prominent
     if (!this.highScoreText) {
       this.highScoreText = this.add
-        .text(width / 2, 320 * scaleFactor, localization.gameOver.highScore.replace('{score}', this.highScore.toFixed(2)), {
-          fontFamily: 'Staatliches',
-          fontSize: `${highScoreFontSize}px`,
-          color: '#ffff00', // Yellow color for high score
-          stroke: '#000000',
-          strokeThickness: 6 * scaleFactor,
-        })
+        .text(
+          width / 2,
+          320 * scaleFactor,
+          localization.gameOver.highScore.replace('{score}', this.highScore.toFixed(2)),
+          {
+            fontFamily: 'Staatliches',
+            fontSize: `${highScoreFontSize}px`,
+            color: '#ffff00', // Yellow color for high score
+            stroke: '#000000',
+            strokeThickness: 6 * scaleFactor,
+          },
+        )
         .setOrigin(0.5)
     } else {
       this.highScoreText.setFontSize(`${highScoreFontSize}px`)

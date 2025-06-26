@@ -32,19 +32,24 @@ class MainMenuScene extends Phaser.Scene {
     // Oh-Gosh Title next to player
     const titleFontSize = Math.max(32, 64 * scaleFactor * 1.5) // Make it bigger, and scale with window, min 32px
     this.titleText = this.add
-      .text(this.player.x + this.player.displayWidth / 2 + 50 * scaleFactor, this.scale.height / 2, localization.mainMenu.title, {
-        fontSize: `${titleFontSize}px`,
-        color: '#FF69B4', // Hot Pink
-        stroke: '#FFFF00', // Yellow stroke
-        strokeThickness: 8 * scaleFactor,
-        shadow: {
-          offsetX: 5 * scaleFactor,
-          offsetY: 5 * scaleFactor,
-          color: '#000000',
-          blur: 10 * scaleFactor,
-          fill: true,
+      .text(
+        this.player.x + this.player.displayWidth / 2 + 50 * scaleFactor,
+        this.scale.height / 2,
+        localization.mainMenu.title,
+        {
+          fontSize: `${titleFontSize}px`,
+          color: '#FF69B4', // Hot Pink
+          stroke: '#FFFF00', // Yellow stroke
+          strokeThickness: 8 * scaleFactor,
+          shadow: {
+            offsetX: 5 * scaleFactor,
+            offsetY: 5 * scaleFactor,
+            color: '#000000',
+            blur: 10 * scaleFactor,
+            fill: true,
+          },
         },
-      })
+      )
       .setOrigin(0, 0.5) // Align left of text with player, center vertically
 
     // Buttons (initially positioned for bottom-right)
@@ -64,7 +69,12 @@ class MainMenuScene extends Phaser.Scene {
     }
 
     this.fastPlayButton = this.add
-      .text(this.scale.width - buttonXOffset, this.scale.height - buttonYOffset, localization.mainMenu.fastPlay, buttonStyle)
+      .text(
+        this.scale.width - buttonXOffset,
+        this.scale.height - buttonYOffset,
+        localization.mainMenu.fastPlay,
+        buttonStyle,
+      )
       .setOrigin(1, 0.5) // Align right of text with buttonX, center vertically
       .setInteractive()
       .on('pointerdown', () => this.scene.start(SCENE_KEYS.LEVEL1))

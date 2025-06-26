@@ -1,5 +1,13 @@
 import Phaser from 'phaser'
-import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS, DIFFICULTY, WIN_CONDITION, PLAYER } from '../utils/constants'
+import {
+  ANIMATION_KEYS,
+  SCENE_KEYS,
+  TEXTURE_KEYS,
+  AUDIO_KEYS,
+  DIFFICULTY,
+  WIN_CONDITION,
+  PLAYER,
+} from '../utils/constants'
 import { TileGenerator } from '../world/TileGenerator'
 import { EnemyFactory } from '../game/EnemyFactory'
 import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData' // Add this import

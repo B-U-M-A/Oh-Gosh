@@ -24,13 +24,13 @@ export interface LocalizationStrings {
     artistsTitle: string
     artists: string
     backButton: string
-  },
+  }
   gameOver: {
     title: string
     yourScore: string
     highScore: string
     restartPrompt: string
-  },
+  }
   win: {
     title: string
     timeSurvived: string

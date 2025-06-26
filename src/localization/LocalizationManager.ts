@@ -34,7 +34,7 @@ export class LocalizationManager {
 
   async setLanguage(langCode: string): Promise<boolean> {
     if (this.currentLanguage === langCode) return true
-    
+
     const loaded = await this.loadLanguage(langCode)
     if (loaded) {
       this.currentLanguage = langCode
@@ -49,11 +49,11 @@ export class LocalizationManager {
   }
 
   removeChangeListener(callback: () => void): void {
-    this.listeners = this.listeners.filter(l => l !== callback)
+    this.listeners = this.listeners.filter((l) => l !== callback)
   }
 
   private notifyListeners(): void {
-    this.listeners.forEach(callback => callback())
+    this.listeners.forEach((callback) => callback())
   }
 }
 
