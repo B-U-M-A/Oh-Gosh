@@ -76,14 +76,14 @@ class MainMenuScene extends Phaser.Scene {
       titleFontSize = titleFontSize * (maxTitleWidth / this.titleText.displayWidth)
       this.titleText.setFontSize(`${titleFontSize}px`)
     }
-    
+
     // Title width check is now handled by the font size adjustment above
 
     // Buttons (initially positioned for bottom-right)
     const buttonXOffset = 150 * scaleFactor // Offset from right edge
     const buttonSpacing = 70 * scaleFactor // Spacing between buttons
     const minPadding = 20 * scaleFactor // Minimum padding from edges
-    
+
     // Define a base style for buttons to ensure they are visible from creation
     const baseButtonStyle = this.getButtonBaseStyle(scaleFactor)
 
@@ -103,10 +103,10 @@ class MainMenuScene extends Phaser.Scene {
     // Check if the entire button block fits when aligned to the bottom, respecting minPadding from top and bottom.
     // The top edge of the first button would be at `(this.scale.height - minPadding) - requiredTotalVerticalSpace`.
     // If this top edge is greater than or equal to `minPadding` from the top, then it fits at the bottom.
-    if ((this.scale.height - minPadding) - requiredTotalVerticalSpace >= minPadding) {
+    if (this.scale.height - minPadding - requiredTotalVerticalSpace >= minPadding) {
       // It fits at the bottom. Calculate the Y for the center of the first button.
       // The center of the last button would be `(this.scale.height - minPadding) - estimatedButtonHeight / 2`.
-      firstButtonCenterY = (this.scale.height - minPadding) - estimatedButtonHeight / 2 - verticalSpanOfCenters
+      firstButtonCenterY = this.scale.height - minPadding - estimatedButtonHeight / 2 - verticalSpanOfCenters
     } else {
       // It does not fit at the bottom, so align to the top.
       // The center of the first button would be `minPadding + estimatedButtonHeight / 2`.
@@ -269,7 +269,7 @@ class MainMenuScene extends Phaser.Scene {
     const buttonXOffset = 150 * scaleFactor
     const buttonSpacing = 70 * scaleFactor
     const minPadding = 20 * scaleFactor // Minimum padding from edges
-    
+
     // Re-apply base style properties that are dynamic with scaleFactor
     const baseButtonStyle = this.getButtonBaseStyle(scaleFactor)
 
@@ -289,10 +289,10 @@ class MainMenuScene extends Phaser.Scene {
     // Check if the entire button block fits when aligned to the bottom, respecting minPadding from top and bottom.
     // The top edge of the first button would be at `(height - minPadding) - requiredTotalVerticalSpace`.
     // If this top edge is greater than or equal to `minPadding` from the top, then it fits at the bottom.
-    if ((height - minPadding) - requiredTotalVerticalSpace >= minPadding) {
+    if (height - minPadding - requiredTotalVerticalSpace >= minPadding) {
       // It fits at the bottom. Calculate the Y for the center of the first button.
       // The center of the last button would be `(height - minPadding) - estimatedButtonHeight / 2`.
-      firstButtonCenterY = (height - minPadding) - estimatedButtonHeight / 2 - verticalSpanOfCenters
+      firstButtonCenterY = height - minPadding - estimatedButtonHeight / 2 - verticalSpanOfCenters
     } else {
       // It does not fit at the bottom, so align to the top.
       // The center of the first button would be `minPadding + estimatedButtonHeight / 2`.
@@ -386,7 +386,7 @@ class MainMenuScene extends Phaser.Scene {
 
     this.buttons.forEach((button, index) => {
       const isHovered = button.input?.pointerOver // Check if the mouse is currently over this button
-      
+
       if (index === this.selectedButtonIndex) {
         button.setStyle(selectedStyle)
       } else {
