@@ -171,6 +171,12 @@ export abstract class LevelScene extends Phaser.Scene {
       this.initializeInput()
       this.initializeEnemies()
       this.initializeTimers()
+
+      // Add collision between player and ground layers.
+      // This is now handled here to apply to both procedural and tilemap levels.
+      if (this.player && this.groundLayers) {
+        this.physics.add.collider(this.player, this.groundLayers)
+      }
     } catch (error) {
       console.error('Initialization failed:', error)
       this.showError('CRITICAL ERROR\nCould not start game.')
