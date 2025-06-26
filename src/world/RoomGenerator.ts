@@ -1,15 +1,12 @@
 // src/world/RoomGenerator.ts
 
 import Phaser from 'phaser'
+import { RoomType, type RoomTemplate, type LevelLayoutCell } from '../types/WorldTypes'
+import { ROOM_TEMPLATES } from '../data/roomTemplates' // MODIFIED: Use ROOM_TEMPLATES
 import { TileGenerator } from './TileGenerator'
-import { RoomType } from '../types/WorldTypes'
-import { ROOM_TEMPLATES } from '../data/roomTemplates'
-import { TILE_KEYS } from '../utils/constants'
+import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData'
+import { EnemyFactory } from '../game/EnemyFactory'
 
-/**
- * Generates Phaser TilemapLayers based on predefined room templates.
- * Handles the creation of the base tile layer and placement of obstacles.
- */
 export class RoomGenerator {
   private scene: Phaser.Scene
   private tileSize: number
@@ -27,15 +24,12 @@ export class RoomGenerator {
   }
 
   /**
-   * Generates a tilemap layer for a specific room type at given chunk coordinates.
-   * This method creates the base layer and then overlays obstacles defined in the template.
-   *
+   * Generates a tilemap layer for a specific room type at a given chunk position.
    * @param roomType The type of room to generate.
-   * @param chunkX The X-coordinate of the chunk in the level grid.
-   * @param chunkY The Y-coordinate of the chunk in the level grid.
-   * @param chunkSizeTiles The size of the chunk in tiles (e.g., 10 for 10x10).
-   * @returns The created Phaser.Tilemaps.TilemapLayer.
-   * @throws Error if the room template is not found or layer creation fails.
+   * @param chunkX The X coordinate of the chunk in the level grid.
+   * @param chunkY The Y coordinate of the chunk in the level grid.
+   * @param chunkSizeTiles The size of each chunk in tiles (e.g., 10 for 10x10 tiles).
+   * @returns The generated Phaser.Tilemaps.TilemapLayer.
    */
   public generateRoomLayer(
     roomType: RoomType,
@@ -43,50 +37,52 @@ export class RoomGenerator {
     chunkY: number,
     chunkSizeTiles: number,
   ): Phaser.Tilemaps.TilemapLayer {
-    const template = ROOM_TEMPLATES[roomType]
+    const template: RoomTemplate = ROOM_TEMPLATES[roomType] // MODIFIED: Use ROOM_TEMPLATES
+
     if (!template) {
-      throw new Error(`Room template not found for type: ${roomType}`)
+      console.warn(`No room template found for type: ${roomType}. Using empty room.`)
+      // Fallback to an empty room template if not found
+      const emptyTiles = Array(chunkSizeTiles)
+        .fill(0)
+        .map(() => Array(chunkSizeTiles).fill(0))
+      const emptyMap = this.tileGenerator.createTilemap(emptyTiles)
+      const emptyLayer = this.tileGenerator.createLayer(
+        emptyMap,
+        `layer_${roomType}_${chunkX}_${chunkY}`,
+        'world_tileset',
+        chunkX * chunkSizeTiles * this.tileSize,
+        chunkY * chunkSizeTiles * this.tileSize,
+      )
+      // For empty rooms, assuming tile 0 is always walkable, no collision needed unless a wall tile (3) is explicitly placed.
+      emptyLayer.setCollision([3]) // MODIFIED: Ensure tile index 3 is collidable even for fallback layers.
+      return emptyLayer
     }
 
-    // Create a mutable copy of the tiles array to apply obstacles
-    const roomTilesData = template.tiles.map((row) => [...row])
+    const map = this.tileGenerator.createTilemap(template.tiles)
+    const layer = this.tileGenerator.createLayer(
+      map,
+      `layer_${roomType}_${chunkX}_${chunkY}`,
+      'world_tileset',
+      chunkX * chunkSizeTiles * this.tileSize,
+      chunkY * chunkSizeTiles * this.tileSize,
+    )
 
-    // Overlay obstacles onto the base tile data
-    if (template.obstacles) {
-      template.obstacles.forEach((obstacle) => {
-        if (obstacle.y >= 0 && obstacle.y < chunkSizeTiles && obstacle.x >= 0 && obstacle.x < chunkSizeTiles) {
-          roomTilesData[obstacle.y][obstacle.x] = obstacle.tileIndex
-        } else {
-          console.warn(`Obstacle position out of bounds for room type ${roomType}: (${obstacle.x}, ${obstacle.y})`)
-        }
-      })
-    }
-
-    // Create the tilemap from the processed data
-    const map = this.tileGenerator.createTilemap(roomTilesData)
-
-    // Create the layer using the map and the 'world_tileset'
-    const layer = this.tileGenerator.createLayer(map, `Room_${roomType}_${chunkX}_${chunkY}`, 'world_tileset')
-
-    // Position the layer correctly in the world based on chunk coordinates
-    layer.x = chunkX * chunkSizeTiles * this.tileSize
-    layer.y = chunkY * chunkSizeTiles * this.tileSize
-    layer.setDepth(0) // Ensure ground layers are at the bottom
+    // MODIFIED: Always set collision for wall tiles (index 3) for all generated layers.
+    // This ensures that any tile with index 3, which represents a wall in your room templates,
+    // is correctly marked as collidable.
+    layer.setCollision([3])
 
     return layer
   }
 
   /**
-   * Places entities defined in a room template into the scene.
-   * This method is separate from generateRoomLayer because entities are Phaser.GameObjects,
-   * not part of the tilemap layer itself.
-   *
-   * @param roomType The type of room.
-   * @param chunkX The X-coordinate of the chunk.
-   * @param chunkY The Y-coordinate of the chunk.
-   * @param chunkSizeTiles The size of the chunk in tiles.
-   * @param entityGroup The Phaser group to add entities to (e.g., chasers group).
-   * @param player The player sprite (needed for enemy targeting).
+   * Places entities (e.g., enemies, items) within a generated room based on its type.
+   * @param roomType The type of room where entities are to be placed.
+   * @param chunkX The X coordinate of the chunk in the level grid.
+   * @param chunkY The Y coordinate of the chunk in the level grid.
+   * @param chunkSizeTiles The size of each chunk in tiles.
+   * @param entityGroup The Phaser.Physics.Arcade.Group to add entities to.
+   * @param player The player sprite, needed for some entity behaviors (e.g., chasing).
    */
   public placeEntities(
     roomType: RoomType,
@@ -96,31 +92,27 @@ export class RoomGenerator {
     entityGroup: Phaser.Physics.Arcade.Group,
     player: Phaser.Physics.Arcade.Sprite,
   ): void {
-    const template = ROOM_TEMPLATES[roomType]
+    const template: RoomTemplate = ROOM_TEMPLATES[roomType] // MODIFIED: Use ROOM_TEMPLATES
     if (!template || !template.entities) {
-      return // No entities defined for this room type
+      return // No entities to place for this room type or template not found
     }
 
     template.entities.forEach((entityConfig) => {
       const worldX = (chunkX * chunkSizeTiles + entityConfig.x) * this.tileSize + this.tileSize / 2
       const worldY = (chunkY * chunkSizeTiles + entityConfig.y) * this.tileSize + this.tileSize / 2
 
-      // Example: If entityConfig.type is an enemy type
-      if (entityConfig.type === TILE_KEYS.WALL) {
-        // For now, we're handling walls as part of the tilemap.
-        // If you wanted interactive obstacles, you'd create a sprite here.
-        // For example, a destructible wall:
-        // const wall = this.scene.physics.add.sprite(worldX, worldY, 'wall_texture');
-        // wall.setImmovable(true);
-        // entityGroup.add(wall); // If you have an 'obstacles' group
+      switch (entityConfig.type) {
+        case ENEMY_TYPES.BASIC_CHASER:
+          const chaser = EnemyFactory.createEnemy(this.scene, ENEMY_CONFIGS.BASIC_CHASER, worldX, worldY)
+          entityGroup.add(chaser)
+          // Set chaser to move towards the player immediately upon creation
+          this.scene.physics.moveToObject(chaser, player, ENEMY_CONFIGS.BASIC_CHASER.speed)
+          break
+        // Add cases for other entity types (e.g., TREASURE, NPC)
+        default:
+          console.warn(`Unknown entity type: ${entityConfig.type}`)
+          break
       }
-      // Add more entity types here (e.g., enemies, items)
-      // For enemies, you'd use EnemyFactory:
-      // if (entityConfig.type === ENEMY_TYPES.BASIC_CHASER) {
-      //   const enemy = EnemyFactory.createEnemy(this.scene, ENEMY_CONFIGS[ENEMY_TYPES.BASIC_CHASER], worldX, worldY);
-      //   entityGroup.add(enemy);
-      //   this.scene.physics.moveToObject(enemy, player, this.scene.difficultyManager.getChaserSpeed());
-      // }
     })
   }
 }

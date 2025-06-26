@@ -102,6 +102,10 @@ export abstract class LevelScene extends Phaser.Scene {
   /** Background graphics for the progress bar. */
   protected progressBarBackground?: Phaser.GameObjects.Graphics
 
+  // ADDED: Bound callbacks for keyboard and scene events
+  private togglePauseBound: () => void
+  private onResumeBound: () => void
+
   /**
    * Abstract method to be implemented by concrete level scenes to provide their specific configuration.
    * @returns The LevelConfig object for the current level.
@@ -120,6 +124,10 @@ export abstract class LevelScene extends Phaser.Scene {
     this.difficultyManager = new DifficultyManager(this)
     // Set initial win time remaining based on config
     this.winTimeRemaining = config.timeToSurviveMs / 1000
+
+    // ADDED: Bind methods to 'this' context once in the constructor
+    this.togglePauseBound = this.togglePause.bind(this)
+    this.onResumeBound = this.onResume.bind(this)
   }
 
   /**
@@ -355,9 +363,13 @@ export abstract class LevelScene extends Phaser.Scene {
     this.arrowCursors = this.input.keyboard?.createCursorKeys()
 
     // Register event listeners for pause and game blur
-    this.input.keyboard?.on('keydown-P', () => this.togglePause())
-    this.input.keyboard?.on('keydown-ESC', () => this.togglePause())
-    this.sys.game.events.on('blur', () => this.handleGameBlur()) // Pause game when window loses focus
+    // MODIFIED: Use the bound callback for 'P' and 'ESC'
+    this.input.keyboard?.on('keydown-P', this.togglePauseBound)
+    this.input.keyboard?.on('keydown-ESC', this.togglePauseBound)
+    this.sys.game.events.on('blur', () => this.handleGameBlur()) // This is fine as an anonymous function
+
+    // ADDED: When the scene resumes, re-add the keyboard listeners
+    this.events.on(Phaser.Scenes.Events.RESUME, this.onResumeBound)
   }
 
   /**
@@ -406,11 +418,11 @@ export abstract class LevelScene extends Phaser.Scene {
     // Stop background music
     this.sound.stopByKey(config.musicKey)
 
-    // Remove keyboard event listeners
-    this.input.keyboard?.off('keydown-P')
-    this.input.keyboard?.off('keydown-ESC')
-    // Remove scene resume event listener (if any)
-    this.events.off(Phaser.Scenes.Events.RESUME)
+    // Remove keyboard event listeners using bound references
+    this.input.keyboard?.off('keydown-P', this.togglePauseBound)
+    this.input.keyboard?.off('keydown-ESC', this.togglePauseBound)
+    // Remove scene resume event listener
+    this.events.off(Phaser.Scenes.Events.RESUME, this.onResumeBound) // MODIFIED: Use bound callback
     // Remove localization change listener
     localizationManager.removeChangeListener(() => this.updateText())
     // Remove resize event listener
@@ -451,6 +463,15 @@ export abstract class LevelScene extends Phaser.Scene {
   }
 
   /**
+   * Handles re-adding keyboard listeners when the scene resumes.
+   * This is a bound method used with `this.events.on(Phaser.Scenes.Events.RESUME, this.onResumeBound)`.
+   */
+  private onResume(): void {
+    this.input.keyboard?.on('keydown-P', this.togglePauseBound)
+    this.input.keyboard?.on('keydown-ESC', this.togglePauseBound)
+  }
+
+  /**
    * Updates the physics world bounds and main camera bounds based on the level dimensions.
    * This is crucial for keeping entities within the playable area and camera tracking.
    */
@@ -485,10 +506,10 @@ export abstract class LevelScene extends Phaser.Scene {
    */
   protected togglePause(): void {
     if (!this.scene.isPaused()) {
-      // Disable keyboard input to prevent actions while paused
-      if (this.input.keyboard) {
-        this.input.keyboard.enabled = false
-      }
+      // MODIFIED: Explicitly remove the specific keyboard listeners when pausing
+      this.input.keyboard?.off('keydown-P', this.togglePauseBound)
+      this.input.keyboard?.off('keydown-ESC', this.togglePauseBound)
+
       this.scene.pause() // Pause the current scene
 
       // Pause active timers
@@ -498,14 +519,14 @@ export abstract class LevelScene extends Phaser.Scene {
       // Attempt to launch the PauseScene
       if (this.scene.manager.keys[SCENE_KEYS.PAUSE]) {
         // Pass a reference to this LevelScene instance to the PauseScene
-        this.scene.launch(SCENE_KEYS.PAUSE, { parentScene: this }) // MODIFIED LINE
+        this.scene.launch(SCENE_KEYS.PAUSE, { parentScene: this })
       } else {
         // Fallback if PauseScene is not found (e.g., development error)
         console.error(`Pause scene key not found: ${SCENE_KEYS.PAUSE}`)
         this.scene.resume() // Resume game if pause scene can't be launched
-        if (this.input.keyboard) {
-          this.input.keyboard.enabled = true
-        }
+        // MODIFIED: Re-add listeners if pause scene launch fails
+        this.input.keyboard?.on('keydown-P', this.togglePauseBound)
+        this.input.keyboard?.on('keydown-ESC', this.togglePauseBound)
       }
     }
   }

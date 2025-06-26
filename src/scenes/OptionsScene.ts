@@ -3,15 +3,14 @@
 import Phaser from 'phaser'
 import { SCENE_KEYS } from '../utils/constants'
 import { localizationManager } from '../localization/LocalizationManager'
-// Import LevelScene base class for type safety
-import { LevelScene } from './LevelScene' // ADDED/MODIFIED IMPORT
+import { LevelScene } from './LevelScene'
 
 /**
  * OptionsScene handles the game's settings and configuration screen.
  * Allows players to adjust:
  * - Language selection (English, Spanish, Portuguese)
  * - Audio volume level
- * - Minimap visibility toggle
+ *
  * Provides UI controls for these settings and handles their persistence.
  */
 class OptionsScene extends Phaser.Scene {
@@ -26,12 +25,10 @@ class OptionsScene extends Phaser.Scene {
   private backButton?: Phaser.GameObjects.Text
   private portugueseButton?: Phaser.GameObjects.Text
 
-  // ADDED PROPERTY: Bound callback for localization changes
   private localizationUpdateCallback: () => void
 
   constructor() {
     super({ key: SCENE_KEYS.OPTIONS })
-    // Bind the updateText method to this instance for use as a callback
     this.localizationUpdateCallback = () => this.updateText()
   }
 
@@ -53,7 +50,7 @@ class OptionsScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#000000')
 
     // Listen for language changes to update UI text
-    localizationManager.addChangeListener(this.localizationUpdateCallback) // MODIFIED: USE BOUND CALLBACK
+    localizationManager.addChangeListener(this.localizationUpdateCallback)
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
     this.handleResize(this.scale.gameSize) // Initial layout
@@ -61,22 +58,11 @@ class OptionsScene extends Phaser.Scene {
     // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
-      localizationManager.removeChangeListener(this.localizationUpdateCallback) // MODIFIED: USE BOUND CALLBACK
+      localizationManager.removeChangeListener(this.localizationUpdateCallback)
       if (this.input) {
         this.input.off('drag') // Clean up drag listener for volume handle
       }
-
-      // Nullify references to allow garbage collection
-      this.titleText = undefined
-      this.languageLabel = undefined
-      this.englishButton = undefined
-      this.spanishButton = undefined
-      this.volumeLabel = undefined
-      this.volumeBar = undefined
-      this.volumeHandle = undefined
-      this.toggleMinimapButton = undefined
-      this.backButton = undefined
-      this.portugueseButton = undefined
+      // No manual nullification of GameObjects here. Let Phaser handle it.
     })
   }
 
@@ -103,21 +89,21 @@ class OptionsScene extends Phaser.Scene {
    */
   private updateText(): void {
     const optionsStrings = localizationManager.getStrings().options
-    const commonStrings = localizationManager.getStrings().common // ADDED: Get common strings
+    const commonStrings = localizationManager.getStrings().common
 
     this.titleText?.setText(optionsStrings.title)
     this.languageLabel?.setText(optionsStrings.language)
     this.volumeLabel?.setText(optionsStrings.volume)
-    // MODIFIED: Use common.backButton
     this.backButton?.setText(commonStrings.backButton)
 
     // Update minimap button text based on current state and new language string
-    // MODIFIED: Use getActiveLevelScene()
     const activeLevelScene = this.getActiveLevelScene()
     const minimapState = activeLevelScene?.isMiniMapVisible
-      ? commonStrings.minimapState.on // MODIFIED: Use common localization
-      : commonStrings.minimapState.off // MODIFIED: Use common localization
-    this.toggleMinimapButton?.setText(`${commonStrings.toggleMinimap} ${minimapState}`) // MODIFIED: Use common localization
+      ? commonStrings.minimapState.on
+      : commonStrings.minimapState.off
+    this.toggleMinimapButton?.setText(
+      activeLevelScene ? `${commonStrings.toggleMinimap} ${minimapState}` : `${commonStrings.toggleMinimap} N/A`,
+    )
 
     // Re-apply styles and positions to ensure padding/font size are correct after text change
     this.handleResize(this.scale.gameSize)
@@ -131,18 +117,17 @@ class OptionsScene extends Phaser.Scene {
     const scaleFactor = Math.min(width / baseWidth, height / baseHeight)
 
     const optionsStrings = localizationManager.getStrings().options
-    const commonStrings = localizationManager.getStrings().common // ADDED: Get common strings
+    const commonStrings = localizationManager.getStrings().common
 
     // --- Title ---
     const titleFontSize = Math.max(48, 96 * scaleFactor)
     if (!this.titleText) {
-      // Add the options title text with gold color and blue violet outline
       this.titleText = this.add
         .text(width / 2, height * 0.15, optionsStrings.title, {
           fontFamily: 'Staatliches',
           fontSize: `${titleFontSize}px`,
-          color: '#FFD700', // Gold
-          stroke: '#8A2BE2', // Blue Violet
+          color: '#FFD700',
+          stroke: '#8A2BE2',
           strokeThickness: 6 * scaleFactor,
         })
         .setOrigin(0.5)
@@ -150,7 +135,7 @@ class OptionsScene extends Phaser.Scene {
       this.titleText.setFontSize(`${titleFontSize}px`)
       this.titleText.setStroke('#8A2BE2', 6 * scaleFactor)
       this.titleText.setPosition(width / 2, height * 0.15)
-      this.titleText.setText(optionsStrings.title) // Update text on resize
+      this.titleText.setText(optionsStrings.title)
     }
 
     // --- UI Elements Styling ---
@@ -159,8 +144,8 @@ class OptionsScene extends Phaser.Scene {
     const buttonPaddingY = 10 * scaleFactor
     const buttonStyle = {
       fontSize: `${buttonFontSize}px`,
-      color: '#00FFFF', // Cyan
-      backgroundColor: '#8A2BE2', // Blue Violet
+      color: '#00FFFF',
+      backgroundColor: '#8A2BE2',
       padding: { x: buttonPaddingX, y: buttonPaddingY },
     }
     const labelFontSize = Math.max(18, 24 * scaleFactor)
@@ -173,11 +158,10 @@ class OptionsScene extends Phaser.Scene {
 
     // --- Language Selection ---
     if (!this.languageLabel) {
-      // Add "Language" label above the language selection buttons
       this.languageLabel = this.add.text(width / 2, currentY, optionsStrings.language, labelStyle).setOrigin(0.5)
     } else {
       this.languageLabel.setPosition(width / 2, currentY).setStyle(labelStyle)
-      this.languageLabel.setText(optionsStrings.language) // Update text on resize
+      this.languageLabel.setText(optionsStrings.language)
     }
     currentY += 40 * scaleFactor
 
@@ -186,11 +170,10 @@ class OptionsScene extends Phaser.Scene {
 
     // English Button
     if (!this.englishButton) {
-      // Add English language button and make it interactive
       this.englishButton = this.add
         .text(width / 2 - langButtonWidth - langButtonSpacing, currentY, 'English', buttonStyle)
         .setOrigin(0.5)
-        .setInteractive() // Makes the text clickable
+        .setInteractive()
         .on('pointerdown', () => this.setLanguage('en'))
         .on('pointerover', () => this.englishButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.englishButton?.setStyle({ color: '#00FFFF' }))
@@ -200,11 +183,10 @@ class OptionsScene extends Phaser.Scene {
 
     // Spanish Button
     if (!this.spanishButton) {
-      // Add Spanish language button and make it interactive
       this.spanishButton = this.add
         .text(width / 2, currentY, 'Español', buttonStyle)
         .setOrigin(0.5)
-        .setInteractive() // Makes the text clickable
+        .setInteractive()
         .on('pointerdown', () => this.setLanguage('es'))
         .on('pointerover', () => this.spanishButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.spanishButton?.setStyle({ color: '#00FFFF' }))
@@ -214,11 +196,10 @@ class OptionsScene extends Phaser.Scene {
 
     // Portuguese Button
     if (!this.portugueseButton) {
-      // Add Portuguese language button and make it interactive
       this.portugueseButton = this.add
         .text(width / 2 + langButtonWidth + langButtonSpacing, currentY, 'Português', buttonStyle)
         .setOrigin(0.5)
-        .setInteractive() // Makes the text clickable
+        .setInteractive()
         .on('pointerdown', () => this.setLanguage('pt'))
         .on('pointerover', () => this.portugueseButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.portugueseButton?.setStyle({ color: '#00FFFF' }))
@@ -233,17 +214,15 @@ class OptionsScene extends Phaser.Scene {
     const volumeYPos = currentY
 
     if (!this.volumeLabel) {
-      // Add volume control label (retrieved from localization)
       this.volumeLabel = this.add
         .text(width / 2, volumeYPos - 30 * scaleFactor, optionsStrings.volume, labelStyle)
         .setOrigin(0.5)
     } else {
       this.volumeLabel.setPosition(width / 2, volumeYPos - 30 * scaleFactor).setStyle(labelStyle)
-      this.volumeLabel.setText(optionsStrings.volume) // Update text on resize
+      this.volumeLabel.setText(optionsStrings.volume)
     }
 
     if (!this.volumeBar) {
-      // Create volume bar background graphics
       this.volumeBar = this.add.graphics()
     }
     this.volumeBar.clear()
@@ -259,12 +238,10 @@ class OptionsScene extends Phaser.Scene {
     const handleX = width / 2 - volumeBarWidth / 2 + this.sound.volume * volumeBarWidth
 
     if (!this.volumeHandle) {
-      // Create draggable volume handle (white square)
       this.volumeHandle = this.add
         .rectangle(handleX, volumeYPos, handleSize, handleSize, 0xffffff)
-        .setInteractive({ draggable: true }) // Allows dragging to adjust volume
+        .setInteractive({ draggable: true })
 
-      // Handle volume handle dragging to adjust sound volume
       this.input.on('drag', (_: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
         if (gameObject !== this.volumeHandle) return
 
@@ -281,43 +258,51 @@ class OptionsScene extends Phaser.Scene {
     currentY += 80 * scaleFactor
 
     // --- Toggle Minimap Button ---
-    // MODIFIED: Use getActiveLevelScene()
     const activeLevelScene = this.getActiveLevelScene()
     const minimapState = activeLevelScene?.isMiniMapVisible
-      ? commonStrings.minimapState.on // MODIFIED: Use common localization
-      : commonStrings.minimapState.off // MODIFIED: Use common localization
+      ? commonStrings.minimapState.on
+      : commonStrings.minimapState.off
 
     if (!this.toggleMinimapButton) {
-      // MODIFIED: Use common localization
-      const initialText = `${commonStrings.toggleMinimap} ${minimapState}`
-      // Add toggle minimap button with current state (on/off)
+      const initialText = activeLevelScene
+        ? `${commonStrings.toggleMinimap} ${minimapState}`
+        : `${commonStrings.toggleMinimap} N/A`
       this.toggleMinimapButton = this.add
         .text(width / 2, currentY, initialText, buttonStyle)
         .setOrigin(0.5)
-        .setInteractive() // Makes the text clickable
+        .setInteractive(!!activeLevelScene)
         .on('pointerdown', this.toggleMinimap, this)
-        .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
-        .on('pointerout', () => this.toggleMinimapButton?.setStyle({ color: '#00FFFF' }))
+        .on('pointerover', () => {
+          if (this.toggleMinimapButton?.input?.enabled) {
+            this.toggleMinimapButton?.setStyle({ color: '#FFD700' })
+          }
+        })
+        .on('pointerout', () => {
+          if (this.toggleMinimapButton?.input?.enabled) {
+            this.toggleMinimapButton?.setStyle({ color: '#00FFFF' })
+          }
+        })
     } else {
-      // MODIFIED: Use common localization
-      this.toggleMinimapButton.setText(`${commonStrings.toggleMinimap} ${minimapState}`)
+      this.toggleMinimapButton.setText(
+        activeLevelScene ? `${commonStrings.toggleMinimap} ${minimapState}` : `${commonStrings.toggleMinimap} N/A`,
+      )
       this.toggleMinimapButton.setPosition(width / 2, currentY).setStyle(buttonStyle)
+      this.toggleMinimapButton.setInteractive(!!activeLevelScene)
     }
     currentY += 80 * scaleFactor
 
     // --- Back to Main Menu Button ---
     if (!this.backButton) {
-      // Add back button to return to main menu
       this.backButton = this.add
-        .text(width / 2, height - 50 * scaleFactor, commonStrings.backButton, buttonStyle) // MODIFIED: Use common.backButton
+        .text(width / 2, height - 50 * scaleFactor, commonStrings.backButton, buttonStyle)
         .setOrigin(0.5)
-        .setInteractive() // Makes the text clickable
+        .setInteractive()
         .on('pointerdown', this.backToMainMenu, this)
         .on('pointerover', () => this.backButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.backButton?.setStyle({ color: '#00FFFF' }))
     } else {
       this.backButton.setPosition(width / 2, height - 50 * scaleFactor).setStyle(buttonStyle)
-      this.backButton.setText(commonStrings.backButton) // Update text on resize
+      this.backButton.setText(commonStrings.backButton)
     }
   }
 
@@ -328,7 +313,6 @@ class OptionsScene extends Phaser.Scene {
   private async setLanguage(langCode: string): Promise<void> {
     const success = await localizationManager.setLanguage(langCode)
     if (success) {
-      // The updateText method will be called automatically by the change listener
       console.log(`Language set to: ${langCode}`)
     } else {
       console.warn(`Could not set language to: ${langCode}`)
@@ -339,15 +323,22 @@ class OptionsScene extends Phaser.Scene {
    * Toggles the minimap visibility in the active LevelScene and updates the button text.
    */
   private toggleMinimap(): void {
-    // MODIFIED: Use getActiveLevelScene()
     const activeLevelScene = this.getActiveLevelScene()
     if (activeLevelScene) {
+      // MODIFIED: Explicitly remove pointerdown listener before disabling interactivity
+      this.toggleMinimapButton?.off('pointerdown', this.toggleMinimap, this)
+      this.toggleMinimapButton?.disableInteractive()
+
       activeLevelScene.toggleMiniMap()
-      const commonStrings = localizationManager.getStrings().common // ADDED: Get common strings
+      const commonStrings = localizationManager.getStrings().common
       const minimapState = activeLevelScene.isMiniMapVisible
-        ? commonStrings.minimapState.on // MODIFIED: Use common localization
-        : commonStrings.minimapState.off // MODIFIED: Use common localization
-      this.toggleMinimapButton?.setText(`${commonStrings.toggleMinimap} ${minimapState}`) // MODIFIED: Use common localization
+        ? commonStrings.minimapState.on
+        : commonStrings.minimapState.off
+      this.toggleMinimapButton?.setText(`${commonStrings.toggleMinimap} ${minimapState}`)
+
+      // MODIFIED: Re-add pointerdown listener after re-enabling interactivity
+      this.toggleMinimapButton?.setInteractive(true)
+      this.toggleMinimapButton?.on('pointerdown', this.toggleMinimap, this)
     } else {
       console.warn('No active LevelScene found. Cannot toggle minimap.')
     }
@@ -357,6 +348,11 @@ class OptionsScene extends Phaser.Scene {
    * Stops the current scene and returns to the MainMenuScene.
    */
   private backToMainMenu(): void {
+    // MODIFIED: Explicitly remove pointerdown listener before disabling interactivity
+    this.backButton?.off('pointerdown', this.backToMainMenu, this)
+    this.backButton?.disableInteractive()
+
+    // MODIFIED: Removed delayedCall. The explicit listener removal should be sufficient.
     this.scene.stop(SCENE_KEYS.OPTIONS)
     this.scene.start(SCENE_KEYS.MAIN_MENU)
   }

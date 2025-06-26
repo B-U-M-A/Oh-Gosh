@@ -51,11 +51,7 @@ class WinScene extends Phaser.Scene {
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
       localizationManager.removeChangeListener(() => this.updateText())
-      // Nullify references to allow garbage collection
-      this.winText = undefined
-      this.scoreText = undefined
-      this.playerSprite = undefined
-      this.restartButton = undefined
+      // No manual nullification of GameObjects here. Let Phaser handle it.
     })
   }
 
@@ -222,12 +218,16 @@ class WinScene extends Phaser.Scene {
   }
 
   private restartGame(): void {
-    // --- Prevent multiple restart triggers from firing simultaneously ---
+    // MODIFIED: Explicitly remove pointerdown listener before disabling interactivity
+    this.restartButton?.off('pointerdown', this.restartGame, this)
+    this.restartButton?.disableInteractive()
+
+    // Prevent multiple restart triggers from firing simultaneously
     this.input.keyboard?.off('keydown-ENTER', this.restartGame, this)
-    this.input.off('pointerdown', this.restartGame, this)
+    // REMOVED: this.input.off('pointerdown', this.restartGame, this)
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this) // Remove resize listener
 
-    // --- Robustly check if the target scene exists before trying to start it ---
+    // Robustly check if the target scene exists before trying to start it
     if (!this.scene.manager.keys[SCENE_KEYS.MAIN_MENU]) {
       console.error(
         `[WinScene:${this.scene.key}] Error in restartGame: Scene key not found: ${SCENE_KEYS.MAIN_MENU}. Cannot restart game.`,
@@ -235,11 +235,11 @@ class WinScene extends Phaser.Scene {
       return
     }
 
+    // MODIFIED: Removed delayedCall. The explicit listener removal should be sufficient.
     this.cameras.main.fadeOut(500, 0, 0, 0, (_: Phaser.Cameras.Scene2D.Camera, progress: number) => {
       if (progress === 1) {
         this.scene.stop(SCENE_KEYS.WIN) // Stop the current WinScene
-        // Transition back to the main menu scene
-        this.scene.start(SCENE_KEYS.MAIN_MENU)
+        this.scene.start(SCENE_KEYS.MAIN_MENU) // Transition back to the main menu scene
       }
     })
   }

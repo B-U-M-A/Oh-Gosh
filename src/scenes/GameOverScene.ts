@@ -52,7 +52,6 @@ class GameOverScene extends Phaser.Scene {
     this.handleResize(this.scale.gameSize)
 
     // --- Restart Logic ---
-    // Set up restart game controls - both mouse click and keyboard
     this.restartButton?.on('pointerdown', this.restartGame, this)
     this.input.keyboard?.on('keydown-ENTER', this.restartGame, this)
 
@@ -60,12 +59,7 @@ class GameOverScene extends Phaser.Scene {
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
       localizationManager.removeChangeListener(() => this.updateText())
-      // Nullify references to allow garbage collection
-      this.gameOverText = undefined
-      this.scoreText = undefined
-      this.highScoreText = undefined
-      this.playerSprite = undefined
-      this.restartButton = undefined
+      // No manual nullification of GameObjects here. Let Phaser handle it.
     })
   }
 
@@ -228,17 +222,22 @@ class GameOverScene extends Phaser.Scene {
   }
 
   private restartGame(): void {
-    // --- Prevent multiple restart triggers from firing simultaneously ---
+    // MODIFIED: Explicitly remove pointerdown listener before disabling interactivity
+    this.restartButton?.off('pointerdown', this.restartGame, this)
+    this.restartButton?.disableInteractive()
+
+    // Prevent multiple restart triggers from firing simultaneously
     this.input.keyboard?.off('keydown-ENTER', this.restartGame, this)
-    this.input.off('pointerdown', this.restartGame, this)
+    // REMOVED: this.input.off('pointerdown', this.restartGame, this)
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this) // Remove resize listener
 
-    // --- Robustly check if the target scene exists before trying to start it ---
+    // Robustly check if the target scene exists before trying to start it
     if (!this.scene.manager.keys[SCENE_KEYS.MAIN_MENU]) {
       console.error(`Scene key not found: ${SCENE_KEYS.MAIN_MENU}. Cannot restart game.`)
       return
     }
 
+    // MODIFIED: Removed delayedCall. The explicit listener removal should be sufficient.
     this.cameras.main.fadeOut(500, 0, 0, 0, (_: Phaser.Cameras.Scene2D.Camera, progress: number) => {
       if (progress === 1) {
         this.scene.stop(SCENE_KEYS.GAME_OVER) // Stop the current GameOverScene
