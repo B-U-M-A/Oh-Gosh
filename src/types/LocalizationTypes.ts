@@ -4,6 +4,7 @@ export interface LocalizationStrings {
     fastPlay: string
     selectLevel: string
     credits: string
+    options: string // ADDED
   }
   pause: {
     title: string
@@ -35,5 +36,17 @@ export interface LocalizationStrings {
     title: string
     timeSurvived: string
     restartPrompt: string
+  }
+  options: {
+    // ADD THIS BLOCK
+    title: string
+    language: string
+    volume: string
+    toggleMinimap: string
+    minimapState: {
+      on: string
+      off: string
+    }
+    backButton: string
   }
 }

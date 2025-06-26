@@ -4,6 +4,7 @@ export default {
     fastPlay: 'Fast Play',
     selectLevel: 'Select Level',
     credits: 'Credits',
+    options: 'Options',
   },
   pause: {
     title: 'PAUSED',
@@ -36,5 +37,17 @@ export default {
     title: 'YOU WIN!',
     timeSurvived: 'Time Survived: {score}s',
     restartPrompt: 'Click or Press Enter to Restart',
+  },
+  options: {
+    // ADD THIS BLOCK
+    title: 'OPTIONS',
+    language: 'Language:',
+    volume: 'Volume:',
+    toggleMinimap: 'Toggle Minimap:',
+    minimapState: {
+      on: 'ON',
+      off: 'OFF',
+    },
+    backButton: 'Back to Main Menu',
   },
 }

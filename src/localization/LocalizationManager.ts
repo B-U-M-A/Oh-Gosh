@@ -22,7 +22,7 @@ export class LocalizationManager {
   async loadLanguage(langCode: string): Promise<boolean> {
     try {
       if (!this.languages[langCode]) {
-        const module = await import(`./${langCode}`)
+        const module = await import(/* @vite-ignore */ `./${langCode}`)
         this.languages[langCode] = module.default
       }
       return true

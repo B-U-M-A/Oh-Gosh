@@ -30,6 +30,7 @@ export const SCENE_KEYS = {
   MAIN_MENU: 'MainMenuScene',
   CREDITS: 'CreditsScene',
   WIN: 'WinScene',
+  OPTIONS: 'OptionsScene',
 }
 
 export const LOCAL_STORAGE_KEYS = {

@@ -8,6 +8,7 @@ class MainMenuScene extends Phaser.Scene {
   private fastPlayButton?: Phaser.GameObjects.Text
   private selectLevelButton?: Phaser.GameObjects.Text
   private creditsButton?: Phaser.GameObjects.Text
+  private optionsButton?: Phaser.GameObjects.Text
 
   constructor() {
     super({ key: SCENE_KEYS.MAIN_MENU })
@@ -107,6 +108,19 @@ class MainMenuScene extends Phaser.Scene {
       .on('pointerover', () => this.creditsButton?.setStyle({ color: '#FFD700' }))
       .on('pointerout', () => this.creditsButton?.setStyle({ color: '#00FFFF' }))
 
+    this.optionsButton = this.add
+      .text(
+        this.scale.width - buttonXOffset,
+        this.scale.height - buttonYOffset + buttonSpacing * 3,
+        localization.mainMenu.options,
+        buttonStyle,
+      )
+      .setOrigin(1, 0.5)
+      .setInteractive()
+      .on('pointerdown', () => this.scene.start(SCENE_KEYS.OPTIONS))
+      .on('pointerover', () => this.optionsButton?.setStyle({ color: '#FFD700' }))
+      .on('pointerout', () => this.optionsButton?.setStyle({ color: '#00FFFF' }))
+
     // Add resize event listener
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
@@ -119,6 +133,7 @@ class MainMenuScene extends Phaser.Scene {
       this.fastPlayButton = undefined
       this.selectLevelButton = undefined
       this.creditsButton = undefined
+      this.optionsButton = undefined
     })
   }
 
@@ -163,6 +178,9 @@ class MainMenuScene extends Phaser.Scene {
       .setStyle(newButtonStyle)
     this.creditsButton
       ?.setPosition(width - buttonXOffset, height - buttonYOffset + buttonSpacing * 2)
+      .setStyle(newButtonStyle)
+    this.optionsButton
+      ?.setPosition(width - buttonXOffset, height - buttonYOffset + buttonSpacing * 3)
       .setStyle(newButtonStyle)
   }
 }
