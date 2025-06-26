@@ -27,21 +27,30 @@ export class EnemyFactory {
   ): Phaser.Physics.Arcade.Sprite {
     const enemy = scene.physics.add.sprite(x, y, config.textureKey, config.frame) // Pass frame to sprite creation
 
+    // Set the sprite's origin point to its center (0.5, 0.5) for proper rotation/scale
     enemy.setOrigin(0.5, 0.5)
+    // Apply the configured scale to size the sprite appropriately
     enemy.setScale(config.scale)
+    // Apply color tint to the sprite as specified in config
     enemy.setTint(config.tint)
-    enemy.setDepth(config.depth ?? 5) // Use config.depth, fallback to 5
-    enemy.setCollideWorldBounds(config.collideWorldBounds ?? true) // Use config.collideWorldBounds, fallback to true
+    // Set rendering depth (z-index), defaulting to 5 if not specified
+    enemy.setDepth(config.depth ?? 5)
+    // Enable/disable world bounds collision, defaulting to true if not specified
+    enemy.setCollideWorldBounds(config.collideWorldBounds ?? true)
 
-    // Apply animations if defined in the config
+    // Animation setup - processes all animation configurations if provided
+    // This creates Phaser animation instances that can be played on the sprite
     if (config.animations) {
       config.animations.forEach((animConfig) => {
-        // Check if frames is an object {start, end} or an array of numbers
-        const frames =
+        // Determine frame data format - either {start, end} range or explicit frame numbers
+        // Converts range format to frame numbers using Phaser's generator if needed
+        const frames: Phaser.Types.Animations.AnimationFrame[] =
           typeof animConfig.frames === 'object' && 'start' in animConfig.frames
             ? scene.anims.generateFrameNumbers(config.textureKey, animConfig.frames)
-            : animConfig.frames
+            : animConfig.frames.map((frame) => ({ key: config.textureKey, frame }))
 
+        // Register the animation with Phaser's animation manager
+        // This makes the animation available to all sprites using the same texture
         scene.anims.create({
           key: animConfig.key,
           frames: frames,
@@ -49,14 +58,16 @@ export class EnemyFactory {
           repeat: animConfig.repeat,
         })
       })
-      // Play the first animation by default if animations are defined
+      // Auto-play the first animation in the list if any animations exist
+      // This provides immediate visual feedback for animated enemies
       if (config.animations.length > 0) {
         enemy.play(config.animations[0].key)
       }
     }
 
-    // You can store the config on the sprite itself if you need to access
-    // its base properties later (e.g., for specific enemy behaviors).
+    // Optional: Uncomment to attach the config to the sprite instance
+    // Useful for later reference to original properties (e.g., resetting states)
+    // Requires type assertion since Phaser.Sprite doesn't natively have this property
     // (enemy as any).enemyConfig = config;
 
     return enemy

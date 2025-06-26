@@ -1,11 +1,21 @@
 // --- Security Utilities --- //
 
+/**
+ * Sanitizes text by converting HTML entities to prevent XSS vulnerabilities.
+ * Uses DOM text node conversion to safely escape HTML tags and special characters.
+ * @param text - The raw text input to be sanitized
+ * @returns The sanitized text with HTML entities escaped, or empty string on error
+ */
 export function sanitizeText(text: string): string {
   try {
+    // Create temporary DOM element to leverage browser's HTML escaping
     const element = document.createElement('div')
+    // Set text content (automatically escapes HTML)
     element.innerText = text
+    // Return innerHTML which now contains escaped entities
     return element.innerHTML
   } catch (error) {
+    // Log error and return safe default if sanitization fails
     console.error('Failed to sanitize text, returning empty string.', error)
     return ''
   }
