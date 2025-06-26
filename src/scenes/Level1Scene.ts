@@ -50,7 +50,7 @@ class Level1Scene extends Phaser.Scene {
   private currentChunkY: number = 0 // Player's current chunk Y coordinate
 
   // Difficulty manager
-    private difficultyManager!: DifficultyManager;
+  private difficultyManager!: DifficultyManager
 
   // Debug and distance constants
   private readonly DEBUG_DISTANCE = false // Toggles distance debug logging
@@ -64,7 +64,7 @@ class Level1Scene extends Phaser.Scene {
 
   constructor() {
     super({ key: SCENE_KEYS.LEVEL1 })
-    this.difficultyManager = new DifficultyManager(this);
+    this.difficultyManager = new DifficultyManager(this)
     this.winTimeRemaining = WIN_CONDITION.TIME_TO_SURVIVE_MS / 1000 // Convert to seconds
   }
 
@@ -223,7 +223,7 @@ class Level1Scene extends Phaser.Scene {
     this.physics.add.collider(this.player!, this.chasers, this.gameOver, undefined, this)
 
     // Chaser spawn timer
-    this.chaserSpawnTimer = this.difficultyManager.createSpawnTimer(this.spawnChaser, this);
+    this.chaserSpawnTimer = this.difficultyManager.createSpawnTimer(this.spawnChaser, this)
 
     // Win condition timer
     this.winTimerEvent = this.time.addEvent({
@@ -643,15 +643,15 @@ class Level1Scene extends Phaser.Scene {
     }
 
     // Update difficulty using the DifficultyManager
-    const difficultyUpdated = this.difficultyManager.updateDifficulty(this.score);
+    const difficultyUpdated = this.difficultyManager.updateDifficulty(this.score)
 
     // Update spawn delay if it has changed and reset timer
     if (difficultyUpdated) {
       this.chaserSpawnTimer?.remove() // Remove old timer
-      this.chaserSpawnTimer = this.difficultyManager.createSpawnTimer(this.spawnChaser, this);
+      this.chaserSpawnTimer = this.difficultyManager.createSpawnTimer(this.spawnChaser, this)
 
       // Update speed of existing chasers
-      this.difficultyManager.updateChasersSpeed(this.chasers!, this.player!);
+      this.difficultyManager.updateChasersSpeed(this.chasers!, this.player!)
     }
   }
 
