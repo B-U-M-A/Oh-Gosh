@@ -107,7 +107,7 @@ class OptionsScene extends Phaser.Scene {
     if (!this.titleText) {
       // Add the options title text with gold color and blue violet outline
       this.titleText = this.add
-          .text(width / 2, height * 0.15, strings.title, {
+        .text(width / 2, height * 0.15, strings.title, {
           fontFamily: 'Staatliches',
           fontSize: `${titleFontSize}px`,
           color: '#FFD700', // Gold
@@ -155,9 +155,9 @@ class OptionsScene extends Phaser.Scene {
     if (!this.englishButton) {
       // Add English language button and make it interactive
       this.englishButton = this.add
-          .text(width / 2 - langButtonWidth - langButtonSpacing, currentY, 'English', buttonStyle)
-          .setOrigin(0.5)
-          .setInteractive() // Makes the text clickable
+        .text(width / 2 - langButtonWidth - langButtonSpacing, currentY, 'English', buttonStyle)
+        .setOrigin(0.5)
+        .setInteractive() // Makes the text clickable
         .on('pointerdown', () => this.setLanguage('en'))
         .on('pointerover', () => this.englishButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.englishButton?.setStyle({ color: '#00FFFF' }))
@@ -169,9 +169,9 @@ class OptionsScene extends Phaser.Scene {
     if (!this.spanishButton) {
       // Add Spanish language button and make it interactive
       this.spanishButton = this.add
-          .text(width / 2, currentY, 'Español', buttonStyle)
-          .setOrigin(0.5)
-          .setInteractive() // Makes the text clickable
+        .text(width / 2, currentY, 'Español', buttonStyle)
+        .setOrigin(0.5)
+        .setInteractive() // Makes the text clickable
         .on('pointerdown', () => this.setLanguage('es'))
         .on('pointerover', () => this.spanishButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.spanishButton?.setStyle({ color: '#00FFFF' }))
@@ -183,9 +183,9 @@ class OptionsScene extends Phaser.Scene {
     if (!this.portugueseButton) {
       // Add Portuguese language button and make it interactive
       this.portugueseButton = this.add
-          .text(width / 2 + langButtonWidth + langButtonSpacing, currentY, 'Português', buttonStyle)
-          .setOrigin(0.5)
-          .setInteractive() // Makes the text clickable
+        .text(width / 2 + langButtonWidth + langButtonSpacing, currentY, 'Português', buttonStyle)
+        .setOrigin(0.5)
+        .setInteractive() // Makes the text clickable
         .on('pointerdown', () => this.setLanguage('pt'))
         .on('pointerover', () => this.portugueseButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.portugueseButton?.setStyle({ color: '#00FFFF' }))
@@ -202,8 +202,8 @@ class OptionsScene extends Phaser.Scene {
     if (!this.volumeLabel) {
       // Add volume control label (retrieved from localization)
       this.volumeLabel = this.add
-          .text(width / 2, volumeYPos - 30 * scaleFactor, strings.volume, labelStyle)
-          .setOrigin(0.5)
+        .text(width / 2, volumeYPos - 30 * scaleFactor, strings.volume, labelStyle)
+        .setOrigin(0.5)
     } else {
       this.volumeLabel.setPosition(width / 2, volumeYPos - 30 * scaleFactor).setStyle(labelStyle)
     }
@@ -227,8 +227,8 @@ class OptionsScene extends Phaser.Scene {
     if (!this.volumeHandle) {
       // Create draggable volume handle (white square)
       this.volumeHandle = this.add
-          .rectangle(handleX, volumeYPos, handleSize, handleSize, 0xffffff)
-          .setInteractive({ draggable: true }) // Allows dragging to adjust volume
+        .rectangle(handleX, volumeYPos, handleSize, handleSize, 0xffffff)
+        .setInteractive({ draggable: true }) // Allows dragging to adjust volume
 
       // Handle volume handle dragging to adjust sound volume
       this.input.on('drag', (_: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
@@ -255,14 +255,14 @@ class OptionsScene extends Phaser.Scene {
     if (!this.toggleMinimapButton) {
       // Add toggle minimap button with current state (on/off)
       this.toggleMinimapButton = this.add
-          .text(
-            width / 2,
-            currentY,
-            `${localizationManager.getStrings().level1.toggleMinimap} ${minimapState}`,
-            buttonStyle,
-          )
-          .setOrigin(0.5)
-          .setInteractive() // Makes the text clickable
+        .text(
+          width / 2,
+          currentY,
+          `${localizationManager.getStrings().level1.toggleMinimap} ${minimapState}`,
+          buttonStyle,
+        )
+        .setOrigin(0.5)
+        .setInteractive() // Makes the text clickable
         .on('pointerdown', this.toggleMinimap, this)
         .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.toggleMinimapButton?.setStyle({ color: '#00FFFF' }))
@@ -276,9 +276,9 @@ class OptionsScene extends Phaser.Scene {
     if (!this.backButton) {
       // Add back button to return to main menu
       this.backButton = this.add
-          .text(width / 2, height - 50 * scaleFactor, localizationManager.getStrings().level1.backButton, buttonStyle)
-          .setOrigin(0.5)
-          .setInteractive() // Makes the text clickable
+        .text(width / 2, height - 50 * scaleFactor, localizationManager.getStrings().level1.backButton, buttonStyle)
+        .setOrigin(0.5)
+        .setInteractive() // Makes the text clickable
         .on('pointerdown', this.backToMainMenu, this)
         .on('pointerover', () => this.backButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.backButton?.setStyle({ color: '#00FFFF' }))

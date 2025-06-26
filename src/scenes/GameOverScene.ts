@@ -76,7 +76,7 @@ class GameOverScene extends Phaser.Scene {
   private updateText(): void {
     // Get localized strings for game over screen
     const gameOverStrings = localizationManager.getStrings().gameOver
-    
+
     // Update all text elements with localized strings and current scores
     this.gameOverText?.setText(gameOverStrings.title)
     this.scoreText?.setText(gameOverStrings.yourScore.replace('{score}', this.score.toFixed(2)))

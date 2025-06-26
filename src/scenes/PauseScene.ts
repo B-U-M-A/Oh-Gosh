@@ -62,7 +62,7 @@ class PauseScene extends Phaser.Scene {
         fontSize: '1px',
         color: '#00FFFF', // Cyan color
         backgroundColor: '#8A2BE2', // Blue Violet background
-        padding: { x: 1, y: 1 }
+        padding: { x: 1, y: 1 },
       })
       .setOrigin(0.5)
       .setInteractive() // Make the text clickable
@@ -70,10 +70,12 @@ class PauseScene extends Phaser.Scene {
       .on('pointerover', () => this.resumeButton?.setStyle({ color: '#FFD700' })) // Gold on hover
       .on('pointerout', () => this.resumeButton?.setStyle({ color: '#00FFFF' })) // Cyan on mouse out
     // Add volume label (text content will be set by updateText())
-    this.volumeLabel = this.add.text(0, 0, '', {
-      fontSize: '1px',
-      color: '#FFFFFF' // White color
-    }).setOrigin(0.5)
+    this.volumeLabel = this.add
+      .text(0, 0, '', {
+        fontSize: '1px',
+        color: '#FFFFFF', // White color
+      })
+      .setOrigin(0.5)
     this.volumeBar = this.add.graphics()
     this.volumeHandle = this.add.rectangle(0, 0, 1, 1, 0xffffff).setInteractive({ draggable: true })
     this.input.on('drag', (_: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
