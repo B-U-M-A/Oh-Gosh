@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS } from '../utils/constants'
-import localization from '../localization/en'
+import { localizationManager } from '../localization/LocalizationManager'
 
 class MainMenuScene extends Phaser.Scene {
   private player?: Phaser.GameObjects.Sprite
@@ -16,6 +16,9 @@ class MainMenuScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor('#000000') // Ensure black background
+
+    // Listen for language changes to update UI text
+    localizationManager.addChangeListener(() => this.updateText())
 
     // Add player sprite with idle animation
     // Define a base resolution for scaling
@@ -36,7 +39,7 @@ class MainMenuScene extends Phaser.Scene {
       .text(
         this.player.x + this.player.displayWidth / 2 + 50 * scaleFactor,
         this.scale.height / 2,
-        localization.mainMenu.title,
+        localizationManager.getStrings().mainMenu.title,
         {
           fontSize: `${titleFontSize}px`,
           color: '#FF69B4', // Hot Pink
@@ -73,7 +76,7 @@ class MainMenuScene extends Phaser.Scene {
       .text(
         this.scale.width - buttonXOffset,
         this.scale.height - buttonYOffset,
-        localization.mainMenu.fastPlay,
+        localizationManager.getStrings().mainMenu.fastPlay,
         buttonStyle,
       )
       .setOrigin(1, 0.5) // Align right of text with buttonX, center vertically
@@ -86,7 +89,7 @@ class MainMenuScene extends Phaser.Scene {
       .text(
         this.scale.width - buttonXOffset,
         this.scale.height - buttonYOffset + buttonSpacing,
-        localization.mainMenu.selectLevel,
+        localizationManager.getStrings().mainMenu.selectLevel,
         buttonStyle,
       )
       .setOrigin(1, 0.5)
@@ -99,7 +102,7 @@ class MainMenuScene extends Phaser.Scene {
       .text(
         this.scale.width - buttonXOffset,
         this.scale.height - buttonYOffset + buttonSpacing * 2,
-        localization.mainMenu.credits,
+        localizationManager.getStrings().mainMenu.credits,
         buttonStyle,
       )
       .setOrigin(1, 0.5)
@@ -112,7 +115,7 @@ class MainMenuScene extends Phaser.Scene {
       .text(
         this.scale.width - buttonXOffset,
         this.scale.height - buttonYOffset + buttonSpacing * 3,
-        localization.mainMenu.options,
+        localizationManager.getStrings().mainMenu.options,
         buttonStyle,
       )
       .setOrigin(1, 0.5)
@@ -124,9 +127,14 @@ class MainMenuScene extends Phaser.Scene {
     // Add resize event listener
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
+    // Initial text update and layout
+    this.updateText()
+    this.handleResize(this.scale.gameSize)
+
     // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+      localizationManager.removeChangeListener(() => this.updateText())
       // Nullify references to allow garbage collection
       this.player = undefined
       this.titleText = undefined
@@ -135,6 +143,22 @@ class MainMenuScene extends Phaser.Scene {
       this.creditsButton = undefined
       this.optionsButton = undefined
     })
+  }
+
+  /**
+   * Updates all text elements in the scene based on the current language.
+   * This method is called when the language changes via LocalizationManager.
+   */
+  private updateText(): void {
+    const strings = localizationManager.getStrings().mainMenu
+    this.titleText?.setText(strings.title)
+    this.fastPlayButton?.setText(strings.fastPlay)
+    this.selectLevelButton?.setText(strings.selectLevel)
+    this.creditsButton?.setText(strings.credits)
+    this.optionsButton?.setText(strings.options)
+
+    // Re-apply styles and positions to ensure padding/font size are correct after text change
+    this.handleResize(this.scale.gameSize)
   }
 
   private handleResize(gameSize: Phaser.Structs.Size): void {

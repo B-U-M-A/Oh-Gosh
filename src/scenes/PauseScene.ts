@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { SCENE_KEYS } from '../utils/constants'
+import { localizationManager } from '../localization/LocalizationManager'
 import Level1Scene from './Level1Scene'
 
 class PauseScene extends Phaser.Scene {
@@ -19,6 +20,9 @@ class PauseScene extends Phaser.Scene {
   }
 
   create() {
+    // Listen for language changes to update UI text
+    localizationManager.addChangeListener(() => this.updateText())
+
     // Add resize event listener
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
@@ -26,7 +30,8 @@ class PauseScene extends Phaser.Scene {
     // Create all UI elements
     this.backgroundRect = this.add.rectangle(0, 0, 1, 1, 0x000000, 0.7).setOrigin(0.5)
     this.pausedText = this.add
-      .text(0, 0, 'PAUSED', {
+      .text(0, 0, '', {
+        // Initial text will be set by updateText()
         fontFamily: 'Staatliches',
         fontSize: '1px',
         color: '#FFD700',
@@ -35,13 +40,13 @@ class PauseScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
     this.resumeButton = this.add
-      .text(0, 0, 'Resume', { fontSize: '1px', color: '#00FFFF', backgroundColor: '#8A2BE2', padding: { x: 1, y: 1 } })
+      .text(0, 0, '', { fontSize: '1px', color: '#00FFFF', backgroundColor: '#8A2BE2', padding: { x: 1, y: 1 } }) // Initial text will be set by updateText()
       .setOrigin(0.5)
       .setInteractive()
       .on('pointerdown', this.resumeGame, this)
       .on('pointerover', () => this.resumeButton?.setStyle({ color: '#FFD700' }))
       .on('pointerout', () => this.resumeButton?.setStyle({ color: '#00FFFF' }))
-    this.volumeLabel = this.add.text(0, 0, 'Volume', { fontSize: '1px', color: '#FFFFFF' }).setOrigin(0.5)
+    this.volumeLabel = this.add.text(0, 0, '', { fontSize: '1px', color: '#FFFFFF' }).setOrigin(0.5) // Initial text will be set by updateText()
     this.volumeBar = this.add.graphics()
     this.volumeHandle = this.add.rectangle(0, 0, 1, 1, 0xffffff).setInteractive({ draggable: true })
     this.input.on('drag', (_: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
@@ -57,7 +62,8 @@ class PauseScene extends Phaser.Scene {
       this.sound.volume = volume
     })
     this.toggleMinimapButton = this.add
-      .text(0, 0, 'Toggle Minimap: OFF', {
+      .text(0, 0, '', {
+        // Initial text will be set by updateText()
         fontSize: '1px',
         color: '#00FFFF',
         backgroundColor: '#8A2BE2',
@@ -68,12 +74,13 @@ class PauseScene extends Phaser.Scene {
       .on('pointerdown', () => {
         const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
         level1Scene.toggleMiniMap()
-        this.toggleMinimapButton?.setText(`Toggle Minimap: ${level1Scene.isMiniMapVisible ? 'ON' : 'OFF'}`)
+        this.updateText() // Update text after toggling minimap
       })
       .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
       .on('pointerout', () => this.toggleMinimapButton?.setStyle({ color: '#00FFFF' }))
     this.backToMenuButton = this.add
-      .text(0, 0, 'Back to Main Menu', {
+      .text(0, 0, '', {
+        // Initial text will be set by updateText()
         fontSize: '1px',
         color: '#00FFFF',
         backgroundColor: '#8A2BE2',
@@ -84,6 +91,7 @@ class PauseScene extends Phaser.Scene {
       .on('pointerdown', this.backToMainMenu, this)
       .on('pointerover', () => this.backToMenuButton?.setStyle({ color: '#FFD700' }))
       .on('pointerout', () => this.backToMenuButton?.setStyle({ color: '#00FFFF' }))
+    this.updateText() // Initial text update
     this.handleResize(this.scale.gameSize)
 
     // --- Keyboard listener to resume the game ---
@@ -93,6 +101,7 @@ class PauseScene extends Phaser.Scene {
     // --- Clean up listeners and objects on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this) // Remove resize listener
+      localizationManager.removeChangeListener(() => this.updateText()) // Remove language change listener
       this.input.keyboard?.off('keydown-P', this.resumeGame, this)
       this.input.keyboard?.off('keydown-ESC', this.resumeGame, this)
       this.input.off('drag') // Clean up drag listener
@@ -137,10 +146,12 @@ class PauseScene extends Phaser.Scene {
     this.backgroundRect.setSize(width, height).setPosition(width / 2, height / 2)
 
     // --- "Paused" Text ---
+    // --- "Paused" Text ---
     const pausedFontSize = Math.max(48, 96 * scaleFactor)
+    const pauseStrings = localizationManager.getStrings().pause
     if (!this.pausedText) {
       this.pausedText = this.add
-        .text(width / 2, height * 0.2, 'PAUSED', {
+        .text(width / 2, height * 0.2, pauseStrings.title, {
           fontFamily: 'Staatliches',
           fontSize: `${pausedFontSize}px`,
           color: '#FFD700', // Gold
@@ -152,6 +163,7 @@ class PauseScene extends Phaser.Scene {
     this.pausedText.setFontSize(`${pausedFontSize}px`)
     this.pausedText.setStroke('#8A2BE2', 6 * scaleFactor)
     this.pausedText.setPosition(width / 2, height * 0.2)
+    this.pausedText.setText(pauseStrings.title)
 
     // --- UI Elements Styling ---
     const buttonFontSize = Math.max(20, 28 * scaleFactor)
@@ -170,9 +182,10 @@ class PauseScene extends Phaser.Scene {
     }
 
     // --- Resume Button ---
+    // --- Resume Button ---
     if (!this.resumeButton) {
       this.resumeButton = this.add
-        .text(width / 2, height * 0.4, 'Resume', buttonStyle)
+        .text(width / 2, height * 0.4, pauseStrings.resume, buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', this.resumeGame, this)
@@ -180,6 +193,7 @@ class PauseScene extends Phaser.Scene {
         .on('pointerout', () => this.resumeButton?.setStyle({ color: '#00FFFF' }))
     }
     this.resumeButton.setPosition(width / 2, height * 0.4).setStyle(buttonStyle)
+    this.resumeButton.setText(pauseStrings.resume)
 
     // --- Volume Control ---
     const volumeBarWidth = 300 * scaleFactor
@@ -187,9 +201,12 @@ class PauseScene extends Phaser.Scene {
     const volumeYPos = height * 0.55
 
     if (!this.volumeLabel) {
-      this.volumeLabel = this.add.text(width / 2, volumeYPos - 30 * scaleFactor, 'Volume', labelStyle).setOrigin(0.5)
+      this.volumeLabel = this.add
+        .text(width / 2, volumeYPos - 30 * scaleFactor, pauseStrings.volume, labelStyle)
+        .setOrigin(0.5)
     }
     this.volumeLabel.setPosition(width / 2, volumeYPos - 30 * scaleFactor).setStyle(labelStyle)
+    this.volumeLabel.setText(pauseStrings.volume)
 
     if (!this.volumeBar) {
       this.volumeBar = this.add.graphics()
@@ -229,19 +246,21 @@ class PauseScene extends Phaser.Scene {
     const minimapButtonYPos = height * 0.7
 
     if (!this.toggleMinimapButton) {
-      const initialText = `Toggle Minimap: ${level1Scene.isMiniMapVisible ? 'ON' : 'OFF'}`
+      const minimapState = level1Scene.isMiniMapVisible ? pauseStrings.minimapState.on : pauseStrings.minimapState.off
+      const initialText = `${pauseStrings.toggleMinimap} ${minimapState}`
       this.toggleMinimapButton = this.add
         .text(width / 2, minimapButtonYPos, initialText, buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', () => {
           level1Scene.toggleMiniMap()
-          this.toggleMinimapButton?.setText(`Toggle Minimap: ${level1Scene.isMiniMapVisible ? 'ON' : 'OFF'}`)
+          this.updateText() // Update text after toggling minimap
         })
         .on('pointerover', () => this.toggleMinimapButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.toggleMinimapButton?.setStyle({ color: '#00FFFF' }))
     }
-    this.toggleMinimapButton.setText(`Toggle Minimap: ${level1Scene.isMiniMapVisible ? 'ON' : 'OFF'}`)
+    const minimapState = level1Scene.isMiniMapVisible ? pauseStrings.minimapState.on : pauseStrings.minimapState.off
+    this.toggleMinimapButton.setText(`${pauseStrings.toggleMinimap} ${minimapState}`)
     this.toggleMinimapButton.setPosition(width / 2, minimapButtonYPos).setStyle(buttonStyle)
 
     // --- Back to Main Menu Button ---
@@ -249,7 +268,7 @@ class PauseScene extends Phaser.Scene {
 
     if (!this.backToMenuButton) {
       this.backToMenuButton = this.add
-        .text(width / 2, backButtonYPos, 'Back to Main Menu', buttonStyle)
+        .text(width / 2, backButtonYPos, pauseStrings.backToMenu, buttonStyle)
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', this.backToMainMenu, this)
@@ -257,6 +276,25 @@ class PauseScene extends Phaser.Scene {
         .on('pointerout', () => this.backToMenuButton?.setStyle({ color: '#00FFFF' }))
     }
     this.backToMenuButton.setPosition(width / 2, backButtonYPos).setStyle(buttonStyle)
+    this.backToMenuButton.setText(pauseStrings.backToMenu)
+  }
+
+  /**
+   * Updates all text elements in the scene based on the current language.
+   * This method is called when the language changes via LocalizationManager.
+   */
+  private updateText(): void {
+    const pauseStrings = localizationManager.getStrings().pause
+    this.pausedText?.setText(pauseStrings.title)
+    this.resumeButton?.setText(pauseStrings.resume)
+    this.volumeLabel?.setText(pauseStrings.volume)
+    this.backToMenuButton?.setText(pauseStrings.backToMenu)
+
+    const level1Scene = this.scene.get(SCENE_KEYS.LEVEL1) as Level1Scene
+    if (level1Scene) {
+      const minimapState = level1Scene.isMiniMapVisible ? pauseStrings.minimapState.on : pauseStrings.minimapState.off
+      this.toggleMinimapButton?.setText(`${pauseStrings.toggleMinimap} ${minimapState}`)
+    }
   }
 
   private resumeGame(): void {

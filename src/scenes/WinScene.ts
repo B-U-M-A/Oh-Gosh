@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS } from '../utils/constants'
-import localization from '../localization/en'
+import { localizationManager } from '../localization/LocalizationManager'
 
 class WinScene extends Phaser.Scene {
   private score: number = 0
@@ -20,9 +20,11 @@ class WinScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor('#000000') // Ensure black background
 
+    localizationManager.addChangeListener(() => this.updateText())
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
     // Initial layout
+    this.updateText()
     this.handleResize(this.scale.gameSize)
 
     // --- Restart Logic ---
@@ -32,12 +34,24 @@ class WinScene extends Phaser.Scene {
     // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+      localizationManager.removeChangeListener(() => this.updateText())
       // Nullify references to allow garbage collection
       this.winText = undefined
       this.scoreText = undefined
       this.playerSprite = undefined
       this.restartButton = undefined
     })
+  }
+
+  /**
+   * Updates all text elements in the scene based on the current language.
+   * This method is called when the language changes via LocalizationManager.
+   */
+  private updateText(): void {
+    const winStrings = localizationManager.getStrings().win
+    this.winText?.setText(winStrings.title)
+    this.scoreText?.setText(winStrings.timeSurvived.replace('{score}', this.score.toFixed(2)))
+    this.restartButton?.setText(winStrings.restartPrompt)
   }
 
   private handleResize(gameSize: Phaser.Structs.Size): void {
@@ -49,9 +63,10 @@ class WinScene extends Phaser.Scene {
 
     // --- 1. Styled "YOU WIN!" Text ---
     const winFontSize = Math.max(64, 128 * scaleFactor)
+    const winStrings = localizationManager.getStrings().win
     if (!this.winText) {
       this.winText = this.add
-        .text(width / 2, 150 * scaleFactor, localization.win.title, {
+        .text(width / 2, 150 * scaleFactor, winStrings.title, {
           fontFamily: 'Staatliches',
           fontSize: `${winFontSize}px`,
           color: '#00ff00', // Green for win
@@ -88,13 +103,14 @@ class WinScene extends Phaser.Scene {
       } catch (e) {
         console.warn('Failed to create text gradient. Using solid color.', e)
       }
+      this.winText.setText(winStrings.title)
     }
 
     // --- Display the final score ---
     const scoreFontSize = Math.max(32, 64 * scaleFactor)
     if (!this.scoreText) {
       this.scoreText = this.add
-        .text(width / 2, 250 * scaleFactor, localization.win.timeSurvived.replace('{score}', this.score.toFixed(2)), {
+        .text(width / 2, 250 * scaleFactor, winStrings.timeSurvived.replace('{score}', this.score.toFixed(2)), {
           fontFamily: 'Staatliches',
           fontSize: `${scoreFontSize}px`,
           color: '#ffffff',
@@ -106,7 +122,7 @@ class WinScene extends Phaser.Scene {
       this.scoreText.setFontSize(`${scoreFontSize}px`)
       this.scoreText.setStroke('#000000', 6 * scaleFactor)
       this.scoreText.setPosition(width / 2, 250 * scaleFactor)
-      this.scoreText.setText(`Time Survived: ${this.score.toFixed(2)}s`) // Ensure text is updated on resize
+      this.scoreText.setText(winStrings.timeSurvived.replace('{score}', this.score.toFixed(2))) // Ensure text is updated on resize
     }
 
     // --- 2. Player Sprite with Idle Animation ---
@@ -132,7 +148,7 @@ class WinScene extends Phaser.Scene {
     const restartFontSize = Math.max(28, 48 * scaleFactor)
     if (!this.restartButton) {
       this.restartButton = this.add
-        .text(width / 2, height - 80 * scaleFactor, localization.win.restartPrompt, {
+        .text(width / 2, height - 80 * scaleFactor, winStrings.restartPrompt, {
           fontFamily: 'Staatliches',
           fontSize: `${restartFontSize}px`,
           color: '#00FFFF', // Cyan

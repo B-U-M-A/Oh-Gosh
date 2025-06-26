@@ -61,6 +61,9 @@ class Level1Scene extends Phaser.Scene {
   }
 
   create(): void {
+    // Listen for language changes to update UI text
+    localizationManager.addChangeListener(() => this.updateText())
+
     // Re-enable keyboard input on scene creation
     if (this.input.keyboard) {
       this.input.keyboard.enabled = true
@@ -116,9 +119,9 @@ class Level1Scene extends Phaser.Scene {
       this.toggleMiniMap(this.isMiniMapVisible) // Set initial visibility based on the property
 
       // Add countdown text for win condition
-      const level1Strings = localizationManager.getStrings().level1
       this.countdownText = this.add
-        .text(10, 15, level1Strings.survive.replace('{time}', this.winTimeRemaining.toFixed(0)), {
+        .text(10, 15, '', {
+          // Initial text will be set by updateText()
           fontFamily: 'Staatliches',
           fontSize: '28px', // Adjusted for better fit inside bar
           color: '#000000', // Black text for contrast
@@ -147,6 +150,7 @@ class Level1Scene extends Phaser.Scene {
 
       // Add resize event listener
       this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+      this.updateText() // Initial text update
     } catch (error) {
       console.error('Fatal Error: Could not create player sprite. Check if assets loaded correctly.', error)
       // Fallback: Stop the scene and maybe show an error.
@@ -224,6 +228,7 @@ class Level1Scene extends Phaser.Scene {
       this.input.keyboard?.off('keydown-P', this.togglePause, this)
       this.input.keyboard?.off('keydown-ESC', this.togglePause, this)
       this.events.off(Phaser.Scenes.Events.RESUME) // Clean up resume listener
+      localizationManager.removeChangeListener(() => this.updateText()) // Remove language change listener
 
       // 2. Nullify input-related properties immediately after removing listeners
       this.wasdCursors = undefined
@@ -550,14 +555,22 @@ class Level1Scene extends Phaser.Scene {
     })
   }
 
+  /**
+   * Updates all text elements in the scene based on the current language.
+   * This method is called when the language changes via LocalizationManager.
+   */
+  private updateText(): void {
+    const level1Strings = localizationManager.getStrings().level1
+    if (this.countdownText) {
+      this.countdownText.setText(level1Strings.survive.replace('{time}', Math.max(0, this.winTimeRemaining).toFixed(0)))
+    }
+  }
+
   private updateCountdown(): void {
     if (this.isGameOver) return // Stop countdown if game is over
 
     this.winTimeRemaining--
-    if (this.countdownText) {
-      const level1Strings = localizationManager.getStrings().level1
-      this.countdownText.setText(level1Strings.survive.replace('{time}', Math.max(0, this.winTimeRemaining).toFixed(0)))
-    }
+    this.updateText() // Update text with new time
     this.updateProgressBar()
 
     if (this.winTimeRemaining <= 0) {

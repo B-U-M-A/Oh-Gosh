@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { SCENE_KEYS, TEXTURE_KEYS, ANIMATION_KEYS, LOCAL_STORAGE_KEYS } from '../utils/constants'
-import localization from '../localization/en'
+import { localizationManager } from '../localization/LocalizationManager'
 
 class GameOverScene extends Phaser.Scene {
   private score: number = 0
@@ -33,9 +33,11 @@ class GameOverScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor('#000000') // Ensure black background
 
+    localizationManager.addChangeListener(() => this.updateText())
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
     // Initial layout
+    this.updateText()
     this.handleResize(this.scale.gameSize)
 
     // --- Restart Logic ---
@@ -45,6 +47,7 @@ class GameOverScene extends Phaser.Scene {
     // --- Clean up listeners on scene shutdown ---
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+      localizationManager.removeChangeListener(() => this.updateText())
       // Nullify references to allow garbage collection
       this.gameOverText = undefined
       this.scoreText = undefined
@@ -52,6 +55,18 @@ class GameOverScene extends Phaser.Scene {
       this.playerSprite = undefined
       this.restartButton = undefined
     })
+  }
+
+  /**
+   * Updates all text elements in the scene based on the current language.
+   * This method is called when the language changes via LocalizationManager.
+   */
+  private updateText(): void {
+    const gameOverStrings = localizationManager.getStrings().gameOver
+    this.gameOverText?.setText(gameOverStrings.title)
+    this.scoreText?.setText(gameOverStrings.yourScore.replace('{score}', this.score.toFixed(2)))
+    this.highScoreText?.setText(gameOverStrings.highScore.replace('{score}', this.highScore.toFixed(2)))
+    this.restartButton?.setText(gameOverStrings.restartPrompt)
   }
 
   private handleResize(gameSize: Phaser.Structs.Size): void {
@@ -63,9 +78,10 @@ class GameOverScene extends Phaser.Scene {
 
     // --- 1. Styled "Game Over" Text ---
     const gameOverFontSize = Math.max(64, 128 * scaleFactor)
+    const gameOverStrings = localizationManager.getStrings().gameOver
     if (!this.gameOverText) {
       this.gameOverText = this.add
-        .text(width / 2, 150 * scaleFactor, localization.gameOver.title, {
+        .text(width / 2, 150 * scaleFactor, gameOverStrings.title, {
           fontFamily: 'Staatliches',
           fontSize: `${gameOverFontSize}px`,
           color: '#ffdd00',
@@ -102,13 +118,14 @@ class GameOverScene extends Phaser.Scene {
       } catch (e) {
         console.warn('Failed to create text gradient. Using solid color.', e)
       }
+      this.gameOverText.setText(gameOverStrings.title)
     }
 
     // --- Display the final score ---
     const scoreFontSize = Math.max(32, 64 * scaleFactor)
     if (!this.scoreText) {
       this.scoreText = this.add
-        .text(width / 2, 250 * scaleFactor, localization.gameOver.yourScore.replace('{score}', this.score.toFixed(2)), {
+        .text(width / 2, 250 * scaleFactor, gameOverStrings.yourScore.replace('{score}', this.score.toFixed(2)), {
           fontFamily: 'Staatliches',
           fontSize: `${scoreFontSize}px`,
           color: '#ffffff',
@@ -120,30 +137,25 @@ class GameOverScene extends Phaser.Scene {
       this.scoreText.setFontSize(`${scoreFontSize}px`)
       this.scoreText.setStroke('#000000', 6 * scaleFactor)
       this.scoreText.setPosition(width / 2, 250 * scaleFactor)
-      this.scoreText.setText(`Your Score: ${this.score.toFixed(2)}`) // Ensure text is updated on resize
+      this.scoreText.setText(gameOverStrings.yourScore.replace('{score}', this.score.toFixed(2))) // Ensure text is updated on resize
     }
 
     const highScoreFontSize = Math.max(28, 56 * scaleFactor) // Slightly smaller than current score, but prominent
     if (!this.highScoreText) {
       this.highScoreText = this.add
-        .text(
-          width / 2,
-          320 * scaleFactor,
-          localization.gameOver.highScore.replace('{score}', this.highScore.toFixed(2)),
-          {
-            fontFamily: 'Staatliches',
-            fontSize: `${highScoreFontSize}px`,
-            color: '#ffff00', // Yellow color for high score
-            stroke: '#000000',
-            strokeThickness: 6 * scaleFactor,
-          },
-        )
+        .text(width / 2, 320 * scaleFactor, gameOverStrings.highScore.replace('{score}', this.highScore.toFixed(2)), {
+          fontFamily: 'Staatliches',
+          fontSize: `${highScoreFontSize}px`,
+          color: '#ffff00', // Yellow color for high score
+          stroke: '#000000',
+          strokeThickness: 6 * scaleFactor,
+        })
         .setOrigin(0.5)
     } else {
       this.highScoreText.setFontSize(`${highScoreFontSize}px`)
       this.highScoreText.setStroke('#000000', 6 * scaleFactor)
       this.highScoreText.setPosition(width / 2, 320 * scaleFactor)
-      this.highScoreText.setText(`High Score: ${this.highScore.toFixed(2)}`) // Ensure text is updated on resize
+      this.highScoreText.setText(gameOverStrings.highScore.replace('{score}', this.highScore.toFixed(2))) // Ensure text is updated on resize
     }
 
     // --- 2. Player Sprite with Idle Animation ---
@@ -169,7 +181,7 @@ class GameOverScene extends Phaser.Scene {
     const restartFontSize = Math.max(28, 48 * scaleFactor)
     if (!this.restartButton) {
       this.restartButton = this.add
-        .text(width / 2, height - 80 * scaleFactor, localization.gameOver.restartPrompt, {
+        .text(width / 2, height - 80 * scaleFactor, gameOverStrings.restartPrompt, {
           fontFamily: 'Staatliches',
           fontSize: `${restartFontSize}px`,
           color: '#00FFFF', // Cyan
