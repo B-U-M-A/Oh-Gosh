@@ -1,3 +1,7 @@
+export const PLAYER = {
+  SPEED: 200, // Base movement speed of the player character
+}
+
 export const TEXTURE_KEYS = {
   IDLE: 'player_character_idle',
   WALK: 'player_character_walk',

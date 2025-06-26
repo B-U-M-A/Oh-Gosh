@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS, DIFFICULTY, WIN_CONDITION } from '../utils/constants'
+import { ANIMATION_KEYS, SCENE_KEYS, TEXTURE_KEYS, AUDIO_KEYS, DIFFICULTY, WIN_CONDITION, PLAYER } from '../utils/constants'
 import { TileGenerator } from '../world/TileGenerator'
 import { EnemyFactory } from '../game/EnemyFactory'
 import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData' // Add this import
@@ -490,7 +490,7 @@ class Level1Scene extends Phaser.Scene {
     const down = this.wasdCursors.down.isDown || this.arrowCursors.down.isDown
 
     // Player speed (can be a fixed value or scaled later if needed)
-    const playerSpeed = 500 // Re-introduce player speed constant here or make it a property
+    const playerSpeed = PLAYER.SPEED
 
     if (left || right || up || down) {
       if (this.player.anims.currentAnim?.key !== ANIMATION_KEYS.PLAYER_WALK) {
