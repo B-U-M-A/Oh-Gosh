@@ -68,6 +68,7 @@ class OptionsScene extends Phaser.Scene {
       this.volumeHandle = undefined
       this.toggleMinimapButton = undefined
       this.backButton = undefined
+      this.portugueseButton = undefined
     })
   }
 

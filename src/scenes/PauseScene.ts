@@ -152,13 +152,8 @@ class PauseScene extends Phaser.Scene {
       this.backToMenuButton = undefined
       this.volumeLabel = undefined
       this.volumeBar = undefined
-
-      // Stop and destroy any active tweens on resumeText
-      // This check was incorrect, it should be checking if resumeButton exists or if there are tweens on it.
-      // However, for this specific bug fix, this line is not relevant.
-      // if (this.resumeGame) {
-      //   this.tweens.killTweensOf(this.resumeGame)
-      // }
+      this.volumeHandle = undefined
+      this.toggleMinimapButton = undefined
     })
   }
 
@@ -175,7 +170,6 @@ class PauseScene extends Phaser.Scene {
     }
     this.backgroundRect.setSize(width, height).setPosition(width / 2, height / 2)
 
-    // --- "Paused" Text ---
     // --- "Paused" Text ---
     const pausedFontSize = Math.max(48, 96 * scaleFactor)
     const pauseStrings = localizationManager.getStrings().pause
@@ -211,7 +205,6 @@ class PauseScene extends Phaser.Scene {
       color: '#FFFFFF',
     }
 
-    // --- Resume Button ---
     // --- Resume Button ---
     if (!this.resumeButton) {
       this.resumeButton = this.add

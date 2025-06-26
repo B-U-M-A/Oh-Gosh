@@ -176,6 +176,7 @@ class MainMenuScene extends Phaser.Scene {
               id: SCENE_KEYS.LEVEL1,
               name: 'Level 1',
               config: {
+                levelType: 'procedural',
                 tilemapKey: 'world',
                 musicKey: AUDIO_KEYS.IN_GAME_MUSIC,
                 timeToSurviveMs: 40000,
@@ -189,6 +190,7 @@ class MainMenuScene extends Phaser.Scene {
               id: SCENE_KEYS.LEVEL2,
               name: 'Level 2',
               config: {
+                levelType: 'tilemap',
                 tilemapKey: 'world',
                 tilemapJson: 'assets/tilemap/oh-gosh-map.tmj',
                 musicKey: AUDIO_KEYS.IN_GAME_MUSIC,

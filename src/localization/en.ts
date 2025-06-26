@@ -40,7 +40,6 @@ export default {
     restartPrompt: 'Click or Press Enter to Restart',
   },
   options: {
-    // ADD THIS BLOCK
     title: 'OPTIONS',
     language: 'Language:',
     volume: 'Volume:',
