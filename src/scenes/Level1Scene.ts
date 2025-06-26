@@ -34,6 +34,10 @@ class Level1Scene extends Phaser.Scene {
   private currentSpawnDelay: number
   private lastDifficultyUpdateScore: number = 0
 
+  // Debug and distance constants
+  private readonly DEBUG_DISTANCE = false
+  private readonly MAX_DISTANCE_MULTIPLIER = 1 // 1x window width
+
   // Win condition properties
   private winTimeRemaining: number
   private countdownText?: Phaser.GameObjects.Text
@@ -382,44 +386,67 @@ class Level1Scene extends Phaser.Scene {
     const camera = this.cameras.main
     let x, y
     const spawnPadding = 100 // Distance outside camera view
+    const maxDistanceFromPlayer = this.cameras.main.worldView.height * this.MAX_DISTANCE_MULTIPLIER // Use window width instead of player width
 
     // Determine spawn side (top, bottom, left, right)
     const side = Phaser.Math.Between(0, 3)
 
-    switch (side) {
-      case 0: // Top
-        x = Phaser.Math.Between(camera.worldView.left, camera.worldView.right)
-        y = camera.worldView.top - spawnPadding
-        break
-      case 1: // Bottom
-        x = Phaser.Math.Between(camera.worldView.left, camera.worldView.right)
-        y = camera.worldView.bottom + spawnPadding
-        break
-      case 2: // Left
-        x = camera.worldView.left - spawnPadding
-        y = Phaser.Math.Between(camera.worldView.top, camera.worldView.bottom)
-        break
-      case 3: // Right
-        x = camera.worldView.right + spawnPadding
-        y = Phaser.Math.Between(camera.worldView.top, camera.worldView.bottom)
-        break
-      default:
-        x = camera.worldView.centerX
-        y = camera.worldView.centerY
-        break
-    }
+    // Try up to 5 times to find a good spawn position
+    for (let i = 0; i < 5; i++) {
+      switch (side) {
+        case 0: // Top
+          x = Phaser.Math.Between(camera.worldView.left, camera.worldView.right)
+          y = camera.worldView.top - spawnPadding
+          break
+        case 1: // Bottom
+          x = Phaser.Math.Between(camera.worldView.left, camera.worldView.right)
+          y = camera.worldView.bottom + spawnPadding
+          break
+        case 2: // Left
+          x = camera.worldView.left - spawnPadding
+          y = Phaser.Math.Between(camera.worldView.top, camera.worldView.bottom)
+          break
+        case 3: // Right
+          x = camera.worldView.right + spawnPadding
+          y = Phaser.Math.Between(camera.worldView.top, camera.worldView.bottom)
+          break
+        default:
+          x = camera.worldView.centerX
+          y = camera.worldView.centerY
+          break
+      }
 
-    // Ensure spawn position is within world bounds
-    const worldWidth = this.WORLD_MAX_CHUNKS_X * this.CHUNK_SIZE_TILES * this.TILE_SIZE
-    const worldHeight = this.WORLD_MAX_CHUNKS_Y * this.CHUNK_SIZE_TILES * this.TILE_SIZE
-    x = Phaser.Math.Clamp(x, 0, worldWidth)
-    y = Phaser.Math.Clamp(y, 0, worldHeight)
+      // Ensure spawn position is within world bounds
+      const worldWidth = this.WORLD_MAX_CHUNKS_X * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+      const worldHeight = this.WORLD_MAX_CHUNKS_Y * this.CHUNK_SIZE_TILES * this.TILE_SIZE
+      x = Phaser.Math.Clamp(x, 0, worldWidth)
+      y = Phaser.Math.Clamp(y, 0, worldHeight)
+
+      // Check distance from player if player exists
+      if (this.player) {
+        const distance = Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y)
+        if (distance <= maxDistanceFromPlayer) {
+          break // Good spawn position found
+        } else {
+          // Adjust position to be closer to player
+          const angle = Phaser.Math.Angle.Between(x, y, this.player.x, this.player.y)
+          const newDistance = maxDistanceFromPlayer * 0 // Aim for 80% of max distance
+          x = this.player.x + Math.cos(angle) * newDistance
+          y = this.player.y + Math.sin(angle) * newDistance
+          break
+        }
+      }
+    }
 
     // Get the configuration for the basic chaser enemy
     const chaserConfig = ENEMY_CONFIGS[ENEMY_TYPES.BASIC_CHASER]
 
+    // Ensure valid spawn coordinates
+    const spawnX = x !== undefined ? x : camera.worldView.centerX
+    const spawnY = y !== undefined ? y : camera.worldView.centerY
+
     // Use the EnemyFactory to create the chaser sprite
-    const chaser = EnemyFactory.createEnemy(this, chaserConfig, x, y)
+    const chaser = EnemyFactory.createEnemy(this, chaserConfig, spawnX, spawnY)
 
     // Add the created chaser to the chasers group
     this.chasers.add(chaser)
@@ -463,7 +490,7 @@ class Level1Scene extends Phaser.Scene {
     const down = this.wasdCursors.down.isDown || this.arrowCursors.down.isDown
 
     // Player speed (can be a fixed value or scaled later if needed)
-    const playerSpeed = 200 // Re-introduce player speed constant here or make it a property
+    const playerSpeed = 500 // Re-introduce player speed constant here or make it a property
 
     if (left || right || up || down) {
       if (this.player.anims.currentAnim?.key !== ANIMATION_KEYS.PLAYER_WALK) {
@@ -496,13 +523,25 @@ class Level1Scene extends Phaser.Scene {
     // Chaser movement logic (chasers always move towards the player)
     this.chasers?.children.each((chaser) => {
       if (chaser instanceof Phaser.Physics.Arcade.Sprite && this.player) {
+        const distance = Phaser.Math.Distance.Between(chaser.x, chaser.y, this.player.x, this.player.y)
+        const maxDistance = this.cameras.main.worldView.height * this.MAX_DISTANCE_MULTIPLIER
+
+        if (this.DEBUG_DISTANCE) {
+          console.log(
+            `Enemy distance: ${distance}px, Max allowed: ${maxDistance}px, Window width: ${this.cameras.main.worldView.width}px`,
+          )
+        }
+
+        // If chaser is too far away, destroy and respawn it
+        if (distance > maxDistance) {
+          chaser.destroy()
+          this.spawnChaser()
+          return true // Continue iteration
+        }
+
         // Re-target chasers if they are not moving or if player moved significantly
         // This ensures they keep chasing even if their initial target was slightly off
-        if (
-          chaser.body &&
-          ((chaser.body.velocity.x === 0 && chaser.body.velocity.y === 0) ||
-            Phaser.Math.Distance.Between(chaser.x, chaser.y, this.player.x, this.player.y) > 50)
-        ) {
+        if (chaser.body && ((chaser.body.velocity.x === 0 && chaser.body.velocity.y === 0) || distance > 50)) {
           this.physics.moveToObject(chaser, this.player, this.currentChaserSpeed)
         }
       }
