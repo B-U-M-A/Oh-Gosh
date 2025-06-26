@@ -47,7 +47,7 @@ export class EnemyFactory {
         const frames: Phaser.Types.Animations.AnimationFrame[] =
           typeof animConfig.frames === 'object' && 'start' in animConfig.frames
             ? scene.anims.generateFrameNumbers(config.textureKey, animConfig.frames)
-            : animConfig.frames.map(frame => ({ key: config.textureKey, frame }))
+            : animConfig.frames.map((frame) => ({ key: config.textureKey, frame }))
 
         // Register the animation with Phaser's animation manager
         // This makes the animation available to all sprites using the same texture
