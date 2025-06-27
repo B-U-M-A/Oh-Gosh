@@ -12,7 +12,7 @@ function App() {
 
   useEffect(() => {
     // Only proceed if the DOM reference is available
-    if (gameContainerRef.current) {
+    if (game && gameContainerRef.current) {
       // Remove the Phaser canvas from its default parent element
       game.canvas.parentElement?.removeChild(game.canvas)
       // Append the Phaser canvas to our designated container

@@ -1,4 +1,4 @@
-import { initiateDiscordSDK } from './utils/discordSdk';
+import { initiateDiscordSDK } from './utils/discordSdk'
 
 import Phaser from 'phaser'
 import GameOverScene from './scenes/GameOverScene'
@@ -12,10 +12,9 @@ import WinScene from './scenes/WinScene'
 import OptionsScene from './scenes/OptionsScene'
 import LevelSelectorScene from './scenes/LevelSelectorScene'
 
-let game: Phaser.Game
-
-(async () => {
-  await initiateDiscordSDK();
+let game: Phaser.Game | undefined
+;(async () => {
+  await initiateDiscordSDK()
 
   /**
    * Main Phaser game configuration object.
@@ -83,6 +82,6 @@ let game: Phaser.Game
     // Re-throw or handle as needed
     throw error
   }
-})();
+})()
 
 export default game
