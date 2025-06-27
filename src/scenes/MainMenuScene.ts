@@ -47,7 +47,10 @@ class MainMenuScene extends Phaser.Scene {
           hitArea: new Phaser.Geom.Rectangle(0, 0, button.width, button.height),
           hitAreaCallback: Phaser.Geom.Rectangle.Contains,
         })
-        button.input.enabled = true
+        // FIX: Added null check for button.input before accessing its properties
+        if (button.input) {
+          button.input.enabled = true
+        }
       }
     })
 
@@ -361,8 +364,8 @@ class MainMenuScene extends Phaser.Scene {
     }
 
     // Update button positions and scale
-    const buttonXOffset = 150 * scaleFactor
-    const buttonSpacing = 70 * scaleFactor
+    const buttonXOffset = 150 * scaleFactor // Offset from right edge
+    const buttonSpacing = 70 * scaleFactor // Spacing between buttons
     const minPadding = 20 * scaleFactor // Minimum padding from edges
 
     // Re-apply base style properties that are dynamic with scaleFactor

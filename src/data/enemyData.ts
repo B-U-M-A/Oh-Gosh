@@ -1,4 +1,5 @@
 import type { EnemyConfig } from '../types/EnemyTypes'
+import { DIFFICULTY } from '../utils/constants'
 import { TEXTURE_KEYS } from '../utils/constants'
 
 /**
@@ -34,6 +35,8 @@ export const ENEMY_CONFIGS: { [key: string]: EnemyConfig } = {
     depth: 5,
     // Whether enemy collides with world boundaries
     collideWorldBounds: true,
+    // Base movement speed for this enemy type
+    speed: DIFFICULTY.INITIAL_CHASER_SPEED,
     // Animation configurations for this enemy type
     animations: [
       {

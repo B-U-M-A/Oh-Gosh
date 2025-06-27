@@ -10,8 +10,6 @@ class WinScene extends Phaser.Scene {
   private score: number = 0
   private winText?: Phaser.GameObjects.Text
   private scoreText?: Phaser.GameObjects.Text
-  private highScore: number = 0
-  private highScoreText?: Phaser.GameObjects.Text
   private playerSprite?: Phaser.GameObjects.Sprite
   private restartButton?: Phaser.GameObjects.Text
 

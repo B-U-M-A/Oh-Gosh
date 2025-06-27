@@ -13,6 +13,8 @@ export interface EnemyConfig {
   collideWorldBounds?: boolean // Optional collideWorldBounds property
   // Add other properties as needed for different enemy behaviors or visuals
   // For example:
+  /** Base movement speed of the enemy in pixels per second */
+  speed: number
   // baseHealth: number;
   // attackDamage: number;
   // attackType: 'melee' | 'ranged';

@@ -142,3 +142,6 @@ GEMINI.md
 
 # Prompts
 prompts/
+
+# MacOs
+.DS_Store

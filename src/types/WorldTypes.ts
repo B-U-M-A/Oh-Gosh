@@ -3,20 +3,22 @@
 /**
  * Defines different types of rooms that can exist in the game world.
  */
-export enum RoomType {
-  START = 'start', // Player spawn room
-  END = 'end', // Win condition room (or exit)
-  COMBAT = 'combat', // Room designed for enemy encounters
-  TREASURE = 'treasure', // Room containing valuable items
-  SHOP = 'shop', // Room where players can buy/sell
-  EMPTY = 'empty', // Basic room with minimal features
-  CORRIDOR_H = 'corridor_h', // Horizontal corridor
-  CORRIDOR_V = 'corridor_v', // Vertical corridor
-  CORNER_TL = 'corner_tl', // Top-left corner corridor
-  CORNER_TR = 'corner_tr', // Top-right corner corridor
-  CORNER_BL = 'corner_bl', // Bottom-left corner corridor
-  CORNER_BR = 'corner_br', // Bottom-right corner corridor
-}
+export const RoomType = {
+  START: 'start', // Player spawn room
+  END: 'end', // Win condition room (or exit)
+  COMBAT: 'combat', // Room designed for enemy encounters
+  TREASURE: 'treasure', // Room containing valuable items
+  SHOP: 'shop', // Room where players can buy/sell
+  EMPTY: 'empty', // Basic room with minimal features
+  CORRIDOR_H: 'corridor_h', // Horizontal corridor
+  CORRIDOR_V: 'corridor_v', // Vertical corridor
+  CORNER_TL: 'corner_tl', // Top-left corner corridor
+  CORNER_TR: 'corner_tr', // Top-right corner corridor
+  CORNER_BL: 'corner_bl', // Bottom-left corner corridor
+  CORNER_BR: 'corner_br', // Bottom-right corner corridor
+} as const;
+
+export type RoomType = typeof RoomType[keyof typeof RoomType];
 
 /**
  * Defines a template for a single room or corridor.

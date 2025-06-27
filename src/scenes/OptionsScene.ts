@@ -42,8 +42,8 @@ class OptionsScene extends Phaser.Scene {
       setEnglish: () => this.setLanguage('en'),
       setSpanish: () => this.setLanguage('es'),
       setPortuguese: () => this.setLanguage('pt'),
-      toggleMinimap: this.toggleMinimap.bind(this),
-      backToMainMenu: this.backToMainMenu.bind(this),
+      toggleMinimap: this.toggleMinimap.bind(this), // Still needs binding as it's a method
+      backToMainMenu: this.backToMainMenuHandler, // Reference the new property
     }
   }
 
@@ -61,7 +61,7 @@ class OptionsScene extends Phaser.Scene {
    * - Input controls
    */
   private onWake(): void {
-    // Reset input state
+    // Re-enable keyboard input
     if (this.input.keyboard) {
       this.input.keyboard.enabled = true
     }
@@ -88,10 +88,12 @@ class OptionsScene extends Phaser.Scene {
     this.scene.setVisible(true)
 
     // Set up volume drag handler
-    const onDrag = (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
+    const onDrag = (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
       if (gameObject === this.volumeHandle) {
         const { width } = this.scale.gameSize
-        const volumeBarWidth = 300 * Math.min(width / 800, this.scale.gameSize.height / 600)
+        const baseWidth = 800
+        const scaleFactor = Math.min(width / baseWidth, this.scale.gameSize.height / 600)
+        const volumeBarWidth = 300 * scaleFactor
         const barStartX = width / 2 - volumeBarWidth / 2
         const barEndX = width / 2 + volumeBarWidth / 2
         this.volumeHandle.x = Phaser.Math.Clamp(dragX, barStartX, barEndX)
@@ -195,7 +197,6 @@ class OptionsScene extends Phaser.Scene {
 
   private handleResize(gameSize: Phaser.Structs.Size): void {
     const { width, height } = gameSize
-
     const baseWidth = 800
     const baseHeight = 600
     const scaleFactor = Math.min(width / baseWidth, height / baseHeight)
@@ -341,7 +342,7 @@ class OptionsScene extends Phaser.Scene {
         .rectangle(handleX, volumeYPos, handleSize, handleSize, 0xffffff)
         .setInteractive({ draggable: true, useHandCursor: true })
 
-      const onDrag = (_: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
+      const onDrag = (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject, dragX: number) => {
         if (!this.volumeHandle || gameObject !== this.volumeHandle) return
 
         const barStartX = width / 2 - volumeBarWidth / 2
@@ -405,18 +406,13 @@ class OptionsScene extends Phaser.Scene {
 
     // --- Back to Main Menu Button ---
     if (!this.backButton) {
-      const backToMainMenuBound = this.backToMainMenu.bind(this)
       this.backButton = this.add
         .text(width / 2, height - 50 * scaleFactor, commonStrings.backButton, buttonStyle)
         .setOrigin(0.5)
-        .setInteractive()
-        .on('pointerdown', backToMainMenuBound)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', this.boundCallbacks.backToMainMenu)
         .on('pointerover', () => this.backButton?.setStyle({ color: '#FFD700' }))
         .on('pointerout', () => this.backButton?.setStyle({ color: '#00FFFF' }))
-
-      this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
-        this.backButton?.off('pointerdown', backToMainMenuBound)
-      })
     } else {
       this.backButton.setPosition(width / 2, height - 50 * scaleFactor).setStyle(buttonStyle)
       this.backButton.setText(commonStrings.backButton)
@@ -460,7 +456,7 @@ class OptionsScene extends Phaser.Scene {
   }
 
   /**
-   * Stops the current scene and returns to the MainMenuScene.
+   * Clears all UI elements and their event listeners.
    */
   private clearUIElements(): void {
     // Remove all existing interactive elements
@@ -573,38 +569,15 @@ class OptionsScene extends Phaser.Scene {
       .on('pointerout', () => this.backButton?.setStyle({ color: '#00FFFF' }))
   }
 
-  private updateUI(): void {
-    const { width, height } = this.scale.gameSize
-    const baseWidth = 800
-    const baseHeight = 600
-    const scaleFactor = Math.min(width / baseWidth, height / baseHeight)
-
-    // Update positions and styles of existing elements
-    this.titleText
-      .setPosition(width / 2, height * 0.15)
-      .setFontSize(`${Math.max(48, 96 * scaleFactor)}px`)
-      .setStroke('#8A2BE2', 6 * scaleFactor)
-
-    // Update all other UI elements similarly...
-  }
-
-  private backToMainMenu(): void {
-    // Clean up our own interactive elements
-    this.englishButton.removeInteractive()
-    this.spanishButton.removeInteractive()
-    this.portugueseButton.removeInteractive()
-    this.volumeHandle.removeInteractive()
-    this.toggleMinimapButton.removeInteractive()
-    this.backButton.removeInteractive()
-
-    // Remove our own input listeners
-    this.input.off('drag')
-
-    // Resume and bring MainMenu to front
+  /**
+   * Handles the action for returning to the main menu.
+   * This is defined as an arrow function property to ensure 'this' context is always correct.
+   */
+  private backToMainMenuHandler = (): void => {
+    // Stop the OptionsScene
+    this.scene.stop(SCENE_KEYS.OPTIONS)
+    // Switch to the MainMenuScene
     this.scene.switch(SCENE_KEYS.MAIN_MENU)
-    // Set visibility before stopping
-    this.scene.setVisible(false)
-    this.scene.stop()
   }
 }
 

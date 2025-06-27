@@ -14,8 +14,8 @@ class Level1Scene extends LevelScene {
   private readonly LEVEL_HEIGHT_CHUNKS = 5 // e.g., 5 rooms high
 
   // Debug constant specific to Level1Scene
-  private readonly DEBUG_DISTANCE = false // Toggles distance debug logging
-  private readonly MAX_DISTANCE_MULTIPLIER = 1 // Max distance enemies can be from player (1x screen width)
+  // private readonly DEBUG_DISTANCE = false // Toggles distance debug logging
+  // private readonly MAX_DISTANCE_MULTIPLIER = 1 // Max distance enemies can be from player (1x screen width)
 
   constructor() {
     // Call the base class constructor with the scene key.
