@@ -133,3 +133,12 @@ dist
 
 # Repomix
 repomix-*
+
+# Gemini CLI
+GEMINI.md
+
+# Roo Code
+.roo*
+
+# Prompts
+prompts/
