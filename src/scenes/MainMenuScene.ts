@@ -62,7 +62,7 @@ class MainMenuScene extends Phaser.Scene {
    * Preloads assets required for the MainMenuScene.
    */
   preload(): void {
-    this.load.audio('intro_music', 'music/intro_music.wav')
+    this.load.audio('intro_music', 'assets/music/intro_music.wav')
   }
 
   /**

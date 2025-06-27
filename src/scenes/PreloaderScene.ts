@@ -41,15 +41,15 @@ class PreloaderScene extends Phaser.Scene {
 
     // Load all assets
     // Character sprites
-    loadSpriteSheet('src/assets/becerrita/becerrita-idle.png', TEXTURE_KEYS.IDLE, { frameWidth: 64, frameHeight: 64 })
-    loadSpriteSheet('src/assets/becerrita/becerrita-walk.png', TEXTURE_KEYS.WALK, { frameWidth: 64, frameHeight: 64 })
+    loadSpriteSheet('assets/becerrita/becerrita-idle.png', TEXTURE_KEYS.IDLE, { frameWidth: 64, frameHeight: 64 })
+    loadSpriteSheet('assets/becerrita/becerrita-walk.png', TEXTURE_KEYS.WALK, { frameWidth: 64, frameHeight: 64 })
 
     // Level 2 tilemap assets
-    loadSpriteSheet('public/assets/tileset/overworld.png', TEXTURE_KEYS.WORLD, { frameWidth: 64, frameHeight: 64 })
-    this.load.tilemapTiledJSON('level2_tilemap', 'public/assets/tilemap/oh-gosh-map.tmj')
+    loadSpriteSheet('assets/tileset/overworld.png', TEXTURE_KEYS.WORLD, { frameWidth: 64, frameHeight: 64 })
+    this.load.tilemapTiledJSON('level2_tilemap', 'assets/tilemap/oh-gosh-map.tmj')
 
-    loadAudio('src/assets/audio/boing.flac', AUDIO_KEYS.COLLISION)
-    loadAudio('public/music/in_game_music.wav', AUDIO_KEYS.IN_GAME_MUSIC)
+    loadAudio('assets/audio/boing.flac', AUDIO_KEYS.COLLISION)
+    loadAudio('assets/music/in_game_music.wav', AUDIO_KEYS.IN_GAME_MUSIC)
 
     // UI assets
   }
