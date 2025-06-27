@@ -74,6 +74,5 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   update(_time: number, _delta: number): void {
     // Base enemy update logic (e.g., simple movement, animation updates)
-    // Specific enemy types will override this for their AI
   }
 }
