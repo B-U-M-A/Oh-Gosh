@@ -1,7 +1,6 @@
 // src/data/roomTemplates.ts
 
 import { RoomType, type RoomTemplate } from '../types/WorldTypes'
-import { TILE_KEYS } from '../utils/constants'
 
 // Tile indices from world.png (assuming 64x64 frames)
 // 0: Grass, 1: Dirt Path, 2: Dirt, 3: Wall (new)

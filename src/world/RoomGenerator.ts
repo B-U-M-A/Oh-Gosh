@@ -1,7 +1,5 @@
-// src/world/RoomGenerator.ts
-
 import Phaser from 'phaser'
-import { RoomType, type RoomTemplate, type LevelLayoutCell } from '../types/WorldTypes'
+import { RoomType, type RoomTemplate } from '../types/WorldTypes'
 import { ROOM_TEMPLATES } from '../data/roomTemplates' // MODIFIED: Use ROOM_TEMPLATES
 import { TileGenerator } from './TileGenerator'
 import { ENEMY_TYPES, ENEMY_CONFIGS } from '../data/enemyData'
@@ -102,13 +100,15 @@ export class RoomGenerator {
       const worldY = (chunkY * chunkSizeTiles + entityConfig.y) * this.tileSize + this.tileSize / 2
 
       switch (entityConfig.type) {
-        case ENEMY_TYPES.BASIC_CHASER:
+        case ENEMY_TYPES.BASIC_CHASER: {
+          // Wrap the case content in a block to resolve 'no-case-declarations'
           const chaser = EnemyFactory.createEnemy(this.scene, ENEMY_CONFIGS.BASIC_CHASER, worldX, worldY)
           entityGroup.add(chaser)
           // Set chaser to move towards the player immediately upon creation
-          this.scene.physics.moveToObject(chaser, player, ENEMY_CONFIGS.BASIC_CHASER.speed)
+          this.scene.physics.moveToObject(chaser, player, ENEMY_CONFIGS.BASIC_CHASER.speed) // Note: speed is not in EnemyConfig, but in ENEMY_CONFIGS.BASIC_CHASER directly. This will be addressed in a future task if it causes runtime issues.
           break
-        // Add cases for other entity types (e.g., TREASURE, NPC)
+        }
+        // Add cases for other entity types (e.g., TREASURE, NPC) if needed
         default:
           console.warn(`Unknown entity type: ${entityConfig.type}`)
           break
