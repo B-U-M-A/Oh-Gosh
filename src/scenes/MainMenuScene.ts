@@ -31,33 +31,6 @@ class MainMenuScene extends Phaser.Scene {
     this.updateTextBound = this.updateText.bind(this)
   }
 
-  private onWake(): void {
-    // Re-enable keyboard input
-    if (this.input.keyboard) {
-      this.input.keyboard.enabled = true
-      this.keyboardCursors = this.input.keyboard.createCursorKeys()
-      this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)
-    }
-
-    // Fully restore button interactivity
-    this.buttons.forEach((button) => {
-      if (button) {
-        button.setInteractive({
-          useHandCursor: true,
-          hitArea: new Phaser.Geom.Rectangle(0, 0, button.width, button.height),
-          hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-        })
-        // FIX: Added null check for button.input before accessing its properties
-        if (button.input) {
-          button.input.enabled = true
-        }
-      }
-    })
-
-    // Update visuals
-    this.updateSelectionVisuals()
-  }
-
   /**
    * Preloads assets required for the MainMenuScene.
    */
@@ -249,7 +222,7 @@ class MainMenuScene extends Phaser.Scene {
       )
       .setOrigin(1, 0.5)
       .setInteractive()
-      .on('pointerdown', () => this.scene.switch(SCENE_KEYS.CREDITS)) // MODIFIED: Use switch
+      .on('pointerdown', () => this.scene.start(SCENE_KEYS.CREDITS))
       .on('pointerover', () => {
         this.updateSelectionVisuals()
       })
@@ -267,7 +240,7 @@ class MainMenuScene extends Phaser.Scene {
       )
       .setOrigin(1, 0.5)
       .setInteractive()
-      .on('pointerdown', () => this.scene.switch(SCENE_KEYS.OPTIONS))
+      .on('pointerdown', () => this.scene.start(SCENE_KEYS.OPTIONS))
       .on('pointerover', () => {
         this.updateSelectionVisuals()
       })
@@ -294,8 +267,6 @@ class MainMenuScene extends Phaser.Scene {
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
       localizationManager.removeChangeListener(this.updateTextBound)
-      this.events.off(Phaser.Scenes.Events.WAKE, this.onWake, this)
-      this.events.off(Phaser.Scenes.Events.WAKE, this.onWake, this)
 
       // Nullify references to allow garbage collection
       this.player = undefined
