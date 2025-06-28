@@ -105,6 +105,8 @@ export abstract class LevelScene extends Phaser.Scene {
   // ADDED: Bound callbacks for keyboard and scene events
   private togglePauseBound: () => void
   private onResumeBound: () => void
+  // ADDED PROPERTY: Bound callback for localization changes
+  private localizationUpdateCallback: () => void
 
   /**
    * Abstract method to be implemented by concrete level scenes to provide their specific configuration.
@@ -128,6 +130,8 @@ export abstract class LevelScene extends Phaser.Scene {
     // ADDED: Bind methods to 'this' context once in the constructor
     this.togglePauseBound = this.togglePause.bind(this)
     this.onResumeBound = this.onResume.bind(this)
+    // ADDED: Bind the localization update callback
+    this.localizationUpdateCallback = this.updateText.bind(this)
   }
 
   /**
@@ -144,7 +148,8 @@ export abstract class LevelScene extends Phaser.Scene {
     this.sound.play(config.musicKey, soundConfig)
 
     // Register for localization changes to update UI text
-    localizationManager.addChangeListener(() => this.updateText())
+    // MODIFIED: Use the stored bound callback
+    localizationManager.addChangeListener(this.localizationUpdateCallback)
 
     // Enable keyboard input
     if (this.input.keyboard) {
@@ -437,7 +442,8 @@ export abstract class LevelScene extends Phaser.Scene {
     // Remove scene resume event listener
     this.events.off(Phaser.Scenes.Events.RESUME, this.onResumeBound) // MODIFIED: Use bound callback
     // Remove localization change listener
-    localizationManager.removeChangeListener(() => this.updateText())
+    // MODIFIED: Use the stored bound callback
+    localizationManager.removeChangeListener(this.localizationUpdateCallback)
     // Remove resize event listener
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
 
