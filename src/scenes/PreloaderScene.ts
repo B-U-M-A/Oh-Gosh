@@ -12,6 +12,7 @@ class PreloaderScene extends Phaser.Scene {
   }
 
   preload(): void {
+    this.load.setPath('/.proxy')
     // Error handling
     this.load.on('loaderror', (file: Phaser.Loader.File) => {
       const errorMessage = `Error loading asset: ${file.key} - ${file.url}`
@@ -67,9 +68,10 @@ class PreloaderScene extends Phaser.Scene {
 
   private showErrorScreen(): void {
     const errorMessage =
-      localizationManager.getStrings().gameOver?.assetLoadError || 'Error: Failed to load game assets.'
+      localizationManager.getStrings().gameOver?.assetLoadError || 'Error: Failed to load game assets.' // Fallback message
+    const fullErrorMessage = `${errorMessage}\n\nBase URL: ${window.location.href}\n\nDetails:\n${this.errorDetails.join('\n')}\nPlease refresh to try again.`
     this.add
-      .text(this.scale.width / 2, this.scale.height / 2, `${errorMessage}\nPlease refresh to try again.`, {
+      .text(this.scale.width / 2, this.scale.height / 2, fullErrorMessage, {
         fontFamily: 'Arial',
         fontSize: '24px',
         color: '#ff0000',
