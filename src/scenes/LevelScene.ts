@@ -533,7 +533,8 @@ export abstract class LevelScene extends Phaser.Scene {
 
       // Pause active timers
       if (this.chaserSpawnTimer) this.chaserSpawnTimer.paused = true
-      if (this.winTimerEvent) this.winTimerEvent.paused = true
+      // REMOVED: The line below caused the countdown timer to stop when paused.
+      // if (this.winTimerEvent) this.winTimerEvent.paused = true
 
       // Attempt to launch the PauseScene
       if (this.scene.manager.keys[SCENE_KEYS.PAUSE]) {

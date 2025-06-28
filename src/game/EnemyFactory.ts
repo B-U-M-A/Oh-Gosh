@@ -21,12 +21,8 @@ export class EnemyFactory {
    * @param y The initial Y position of the enemy.
    * @returns The created Enemy instance.
    */
-  public static createEnemy(
-    scene: Phaser.Scene,
-    config: EnemyConfig,
-    x: number,
-    y: number,
-  ): Enemy { // Change return type to Enemy
+  public static createEnemy(scene: Phaser.Scene, config: EnemyConfig, x: number, y: number): Enemy {
+    // Change return type to Enemy
     // Instantiate the Enemy class, passing all required info to its constructor
     const enemy = new Enemy(scene, x, y, config.textureKey, config.frame, config)
     return enemy

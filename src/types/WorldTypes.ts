@@ -16,9 +16,9 @@ export const RoomType = {
   CORNER_TR: 'corner_tr', // Top-right corner corridor
   CORNER_BL: 'corner_bl', // Bottom-left corner corridor
   CORNER_BR: 'corner_br', // Bottom-right corner corridor
-} as const;
+} as const
 
-export type RoomType = typeof RoomType[keyof typeof RoomType];
+export type RoomType = (typeof RoomType)[keyof typeof RoomType]
 
 /**
  * Defines a template for a single room or corridor.
