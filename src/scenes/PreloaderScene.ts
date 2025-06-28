@@ -12,6 +12,7 @@ class PreloaderScene extends Phaser.Scene {
   }
 
   preload(): void {
+    this.load.setPath('/.proxy')
     // Error handling
     this.load.on('loaderror', (file: Phaser.Loader.File) => {
       const errorMessage = `Error loading asset: ${file.key} - ${file.url}`
